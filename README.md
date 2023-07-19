@@ -4,10 +4,13 @@ Some work about the CSST grism emulator
 # Abstract
 The accuracy of spectroscopic redshift measurement is essential for cosmic surveys since cosmic parameters are extremely sensitive to the purity and completeness of spectroscopic redshift. 
 Therefore, the slitless spectroscopic redshift survey of the China Space Station Telescope (CSST) requires large simulated data to test the dependence. 
+
 In order to investigate these key points, we established an emulator based on empirical relations of small samples which is capable of quickly generating a hundred million simulated 1-D slitless spectra. 
 We introduce the scientific goals, design concepts, instrumental parameters, and computational methods used in the emulator, as well as how the simulated CSST slitless spectra are generated. 
 The self-blending effects caused by galaxy morphological parameters, e.g., Sersic ($n$), effective radius ${\rm (R_e)}$, position angle (${\rm PA}$), and axial ratio (${\rm b/a}$) on the 1-D slitless spectra are considered in our simulation. 
+The emission lines of each spectrum are detected to pick out emission line galaxies for further study of redshift survey.
 In addition, we also develop an algorithm to estimate the overlap contamination rate of our mock data in the dense galaxy clusters. 
+
 With a high-resolution mock galaxy spectra library of ~ 140 million samples generated from DESI DR9, we obtained the corresponding simulated CSST slitless spectra with our emulator. 
 Our results indicate that these mock spectra data can be used to study the dependence of measurement errors on different types of galaxy redshifts due to instrument and observation effects. 
 Furthermore, we are able to analyze the feasibility of the CSST slitless spectroscopic redshift survey and offer reasonable observation strategies and constraints for constructing the mock galaxy catalog. 
@@ -39,10 +42,10 @@ array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
 Detailed structures: 
 ```
 'ID' # ids of each source in the DESI photometry catalog
-'parameters' # paramters of each source,
+'parameters' # paramters of each source, in array
 ```
 ```
-GU # hdf5 group
+'GU' # hdf5 group
 ├── wave
 ├── flux_ujy
 ├── flux_ujy_with_noise
@@ -51,7 +54,7 @@ GU # hdf5 group
 └── snr
 ```
 ```
-GV # hdf5 group
+'GV' # hdf5 group
 -----simulated spectrum information-----
 ├── wave  # wavelength grid
 ├── flux_ujy # simulated CSST intrinsic slitless spectra in ujy
@@ -72,7 +75,7 @@ GV # hdf5 group
 └── detect_el_snr # mean snr of detected emission lines in noisy spectra
 ```
 ```
-GI # hdf5 group
+'GI' # hdf5 group
 ├── wave
 ├── flux_ujy
 ├── flux_ujy_with_noise
