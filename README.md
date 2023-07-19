@@ -27,9 +27,11 @@ for name in file1:
            print(f"  {subname}")
 ```
 
-```python
-'ID' # ids of each source in DESI photometry catalog
+```
+'ID' # ids of each source in the DESI photometry catalog
 'parameters' # paramters of each source,
+```
+```python
 file['parameters'].attrs['name'],
 array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
        'baratio', 'str_mass', 'gu_rms_in_e', 'gv_rms_in_e', 'gi_rms_in_e',
@@ -39,90 +41,53 @@ array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
   #0 = no el detection, 1 = only intrinsic el detection, 2 = both intrinsic and noisy el detection
 ```
 
-```python
-'GU' # hdf5 group
-       
-  'wave'
-       
-  'flux_ujy'
-       
-  'flux_ujy_with_noise'
-       
-  'ferr'
-  
-  'flux_elec'
-  
-  'snr'
-       
+```
+GU # hdf5 group
+├── wave
+├── flux_ujy
+├── flux_ujy_with_noise
+├── ferr
+├── flux_elec
+└── snr
+```
+```
 'GV' # hdf5 group
-       
 -----simulated spectrum information-----
-       
-  'wave' # wavelength grid
-       
-  'flux_ujy' # simulated CSST intrinsic slitless spectra in ujy
-       
-  'flux_ujy_with_noise' # simulated CSST observed slitless spectra with noise in ujy
-       
-  'ferr' # simulated CSST observed slitless spectra error in ujy
-       
-  'flux_elec' # simulated CSST observed slitless spectra in electrons
-       
-  'snr' # signal-to-noise ratio of each spectra
-       
+├──'wave' # wavelength grid
+├──'flux_ujy' # simulated CSST intrinsic slitless spectra in ujy
+├──'flux_ujy_with_noise' # simulated CSST observed slitless spectra with noise in ujy
+├──'ferr' # simulated CSST observed slitless spectra error in ujy
+├──'flux_elec' # simulated CSST observed slitless spectra in electrons
+├──'snr' # signal-to-noise ratio of each spectra   
 -----intrinsic spectrum emission line information-----
-       
-  'intri_el_id' # ids for source detected with emission lines in intrinsic spectra, i.e., 'flux_ujy'
-       
-  'intri_el_wave' # arrays of the emission line wavelengths in intrinsic spectra
-       
-  'intri_el_idx' # arrays of the emission line wavelength grid corresponding index in intrinsic spectra
-       
-  'intri_el_elnumber' # numbers of detected emission lines in intrinsic spectra
-       
+├──'intri_el_id' # ids for source detected with emission lines in intrinsic spectra, i.e., 'flux_ujy'
+├──'intri_el_wave' # arrays of the emission line wavelengths in intrinsic spectra
+├──'intri_el_idx' # arrays of the emission line wavelength grid corresponding index in intrinsic spectra
+├──'intri_el_elnumber' # numbers of detected emission lines in intrinsic spectra    
 -----noisy spectrum emission line information-----
-       
-  'detect_el_id' # ids for source detected with emission lines in noisy spectra, i.e., 'flux_ujy_with_noise'
-       
-  'detect_el_wave' # arrays of the emission line wavelengths in noisy spectra
-       
-  'detect_el_idx' # arrays of the emission line wavelength grid corresponding index in noisy spectra
-       
-  'detect_el_elnumber' # numbers of detected emission lines in noisy spectra
-       
-  'detect_el_snr' # mean snr of detected emission lines in noisy spectra
-  
-'GI' # hdf5 group
-       
-  'wave'
-       
-  'flux_ujy'
-  
-  'flux_ujy_with_noise'
-  
-  'ferr'
-  
-  'flux_elec'
-  
-  'snr'
-  
-  'intri_el_id'
-  
-  'intri_el_wave'
-  
-  'intri_el_idx'
-  
-  'intri_el_elnumber'
-  
-  'detect_el_id'
-  
-  'detect_el_wave'
-  
-  'detect_el_idx'
-  
-  'detect_el_elnumber'
-  
-  'detect_el_snr'
+├──'detect_el_id' # ids for source detected with emission lines in noisy spectra, i.e., 'flux_ujy_with_noise'
+├──'detect_el_wave' # arrays of the emission line wavelengths in noisy spectra
+├──'detect_el_idx' # arrays of the emission line wavelength grid corresponding index in noisy spectra
+├──'detect_el_elnumber' # numbers of detected emission lines in noisy spectra
+└──'detect_el_snr' # mean snr of detected emission lines in noisy spectra
+```
+```
+-'GI' # hdf5 group
+    -'wave'
+    -'flux_ujy'
+    -'flux_ujy_with_noise'
+    -'ferr'
+    -'flux_elec'
+    -'snr'
+    -'intri_el_id'
+    -'intri_el_wave'
+    -'intri_el_idx'
+    -'intri_el_elnumber'
+    -'detect_el_id'
+    -'detect_el_wave'
+    -'detect_el_idx'
+    -'detect_el_elnumber'
+    -'detect_el_snr'
 ```
 
 ----------23/07/19 update----------
