@@ -13,7 +13,7 @@ Our results indicate that these mock spectra data can be used to study the depen
 Furthermore, we are able to analyze the feasibility of the CSST slitless spectroscopic redshift survey and offer reasonable observation strategies and constraints for constructing the mock galaxy catalog. 
 
 # Flowchart
-![GitHub Logo](https://github.com/RainW7/CSST-grism-emulator/flowchart.png)
+![Flowchart of CSST grism emulator](https://github.com/RainW7/CSST-grism-emulator/flowchart.png)
 
 ----------23/07/19 update----------
 Main files for emulator version 0.7 is uploaded！
