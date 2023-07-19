@@ -15,6 +15,74 @@ Furthermore, we are able to analyze the feasibility of the CSST slitless spectro
 # Flowchart
 ![Flowchart of CSST grism emulator](https://github.com/RainW7/CSST-grism-emulator/blob/main/flowchart.png)
 
+# result file data structure
+<font color="blue">
+>>>import h5py
+>>>file = h5py.File('/Users/rain/emulator/seedcat_0702/seedcat2_0702_0_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5','r')
+>>>for name in file1:
+       print(name)
+       if isinstance(file1[name], h5py.Group):
+           for subname in file1[name]:
+               print(f"  {subname}")
+</font>
+<font color="green">
+'ID' # ids of each source in DESI photometry catalog
+'parameters' # paramters of each source,
+</font>
+<font color="blue">
+  >>> file1['parameters'].attrs['name'],
+  >>> array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
+       'baratio', 'str_mass', 'gu_rms_in_e', 'gv_rms_in_e', 'gi_rms_in_e',
+       'gu_snr_mean', 'gv_snr_mean', 'gi_snr_mean', 
+       'gu_wave_off', 'gv_wave_off', 'gi_wave_off', #wavelength error
+       'gv_el_flag', 'gi_el_flag'], dtype=object) #emission line flags,
+  #0 = no el detection, 1 = only intrinsic el detection, 2 = both intrinsic and noisy el detection
+</font>
+<font color="green">
+'GU' # hdf5 group
+  'wave'
+  'flux_ujy'
+  'flux_ujy_with_noise'
+  'ferr'
+  'flux_elec'
+  'snr'
+'GV' # hdf5 group
+-----simulated spectrum information-----
+  'wave' # wavelength grid
+  'flux_ujy' # simulated CSST intrinsic slitless spectra in ujy
+  'flux_ujy_with_noise' # simulated CSST observed slitless spectra with noise in ujy
+  'ferr' # simulated CSST observed slitless spectra error in ujy
+  'flux_elec' # simulated CSST observed slitless spectra in electrons
+  'snr' # signal-to-noise ratio of each spectra
+-----intrinsic spectrum emission line information-----
+  'intri_el_id' # ids for source detected with emission lines in intrinsic spectra, i.e., 'flux_ujy'
+  'intri_el_wave' # arrays of the emission line wavelengths in intrinsic spectra
+  'intri_el_idx' # arrays of the emission line wavelength grid corresponding index in intrinsic spectra
+  'intri_el_elnumber' # numbers of detected emission lines in intrinsic spectra
+-----noisy spectrum emission line information-----
+  'detect_el_id' # ids for source detected with emission lines in noisy spectra, i.e., 'flux_ujy_with_noise'
+  'detect_el_wave' # arrays of the emission line wavelengths in noisy spectra
+  'detect_el_idx' # arrays of the emission line wavelength grid corresponding index in noisy spectra
+  'detect_el_elnumber' # numbers of detected emission lines in noisy spectra
+  'detect_el_snr' # mean snr of detected emission lines in noisy spectra
+'GI' # hdf5 group
+  'wave'
+  'flux_ujy'
+  'flux_ujy_with_noise'
+  'ferr'
+  'flux_elec'
+  'snr'
+  'intri_el_id'
+  'intri_el_wave'
+  'intri_el_idx'
+  'intri_el_elnumber'
+  'detect_el_id'
+  'detect_el_wave'
+  'detect_el_idx'
+  'detect_el_elnumber'
+  'detect_el_snr'
+</font>
+
 ----------23/07/19 update----------
 
 Main files for emulator version 0.7 is uploaded！
