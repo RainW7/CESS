@@ -16,6 +16,7 @@ Furthermore, we are able to analyze the feasibility of the CSST slitless spectro
 ![Flowchart of CSST grism emulator](https://github.com/RainW7/CSST-grism-emulator/blob/main/flowchart.png)
 
 ----------23/07/19 update----------
+
 Main files for emulator version 0.7 is uploaded！
 1. main.py for the convolution for the CSST intrinsic slitless spectra, simulating observed slitless spectra and emission line detection.
 2. morphology.py for the 2-D parameters fitting and 2-D profile distribution function extraction.
