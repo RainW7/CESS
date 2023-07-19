@@ -17,7 +17,6 @@ Furthermore, we are able to analyze the feasibility of the CSST slitless spectro
 
 # result file data structure
 
-<font color="blue">
 ```python
 import h5py
 file = h5py.File('/Users/rain/emulator/seedcat_0702/seedcat2_0702_0_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5','r')
@@ -27,16 +26,10 @@ for name in file1:
         for subname in file1[name]:
            print(f"  {subname}")
 ```
-</font>
 
-<font color="green">
-'ID' # ids of each source in DESI photometry catalog
-       
-'parameters' # paramters of each source,
-
-</font>
-<font color="blue">
 ```python
+'ID' # ids of each source in DESI photometry catalog
+'parameters' # paramters of each source,
 file['parameters'].attrs['name'],
 array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
        'baratio', 'str_mass', 'gu_rms_in_e', 'gv_rms_in_e', 'gi_rms_in_e',
@@ -45,9 +38,7 @@ array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
        'gv_el_flag', 'gi_el_flag'], dtype=object) #emission line flags,
   #0 = no el detection, 1 = only intrinsic el detection, 2 = both intrinsic and noisy el detection
 ```
-</font>
 
-<font color="green">
 ```python
 'GU' # hdf5 group
        
@@ -133,8 +124,6 @@ array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
   
   'detect_el_snr'
 ```
-</font>
-
 
 ----------23/07/19 update----------
 
