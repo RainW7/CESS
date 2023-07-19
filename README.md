@@ -18,13 +18,15 @@ Furthermore, we are able to analyze the feasibility of the CSST slitless spectro
 # result file data structure
 
 <font color="blue">
->>>import h5py
->>>file = h5py.File('/Users/rain/emulator/seedcat_0702/seedcat2_0702_0_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5','r')
->>>for name in file1:
-       print(name)
-       if isinstance(file1[name], h5py.Group):
-           for subname in file1[name]:
-               print(f"  {subname}")
+```python
+import h5py
+file = h5py.File('/Users/rain/emulator/seedcat_0702/seedcat2_0702_0_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5','r')
+for name in file1:
+    print(name)
+    if isinstance(file1[name], h5py.Group):
+        for subname in file1[name]:
+           print(f"  {subname}")
+```
 </font>
 
 <font color="green">
@@ -34,23 +36,19 @@ Furthermore, we are able to analyze the feasibility of the CSST slitless spectro
 
 </font>
 <font color="blue">
-  >>> file1['parameters'].attrs['name'],
-
-  >>> array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
-       
+```python
+file['parameters'].attrs['name'],
+array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
        'baratio', 'str_mass', 'gu_rms_in_e', 'gv_rms_in_e', 'gi_rms_in_e',
-       
        'gu_snr_mean', 'gv_snr_mean', 'gi_snr_mean', 
-       
        'gu_wave_off', 'gv_wave_off', 'gi_wave_off', #wavelength error
-       
        'gv_el_flag', 'gi_el_flag'], dtype=object) #emission line flags,
-       
   #0 = no el detection, 1 = only intrinsic el detection, 2 = both intrinsic and noisy el detection
+```
 </font>
 
 <font color="green">
-       
+```python
 'GU' # hdf5 group
        
   'wave'
@@ -134,7 +132,7 @@ Furthermore, we are able to analyze the feasibility of the CSST slitless spectro
   'detect_el_elnumber'
   
   'detect_el_snr'
-  
+```
 </font>
 
 
