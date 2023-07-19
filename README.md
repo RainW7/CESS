@@ -26,11 +26,6 @@ for name in file1:
         for subname in file1[name]:
            print(f"  {subname}")
 ```
-Detailed structures: 
-```
-'ID' # ids of each source in the DESI photometry catalog
-'parameters' # paramters of each source,
-```
 How to show column names of parameters: 
 ```python
 file['parameters'].attrs['name'],
@@ -40,6 +35,11 @@ array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
        'gu_wave_off', 'gv_wave_off', 'gi_wave_off', #wavelength error
        'gv_el_flag', 'gi_el_flag'], dtype=object) #emission line flags,
   #0 = no el detection, 1 = only intrinsic el detection, 2 = both intrinsic and noisy el detection
+```
+Detailed structures: 
+```
+'ID' # ids of each source in the DESI photometry catalog
+'parameters' # paramters of each source,
 ```
 ```
 GU # hdf5 group
@@ -58,7 +58,7 @@ GV # hdf5 group
 ├── flux_ujy_with_noise # simulated CSST observed slitless spectra with noise in ujy
 ├── ferr # simulated CSST observed slitless spectra error in ujy
 ├── flux_elec # simulated CSST observed slitless spectra in electrons
-├── snr # signal-to-noise ratio of each spectra   
+├── snr # signal-to-noise ratio of each spectrum   
 -----intrinsic spectrum emission line information-----
 ├── intri_el_id # ids for source detected with emission lines in intrinsic spectra, i.e., 'flux_ujy'
 ├── intri_el_wave # arrays of the emission line wavelengths in intrinsic spectra
