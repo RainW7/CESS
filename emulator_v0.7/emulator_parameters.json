@@ -1,0 +1,52 @@
+
+{
+    "gems_path": "/Users/rain/emulator/gems_cat.fits",
+    "gutp_path": "/Users/rain/emulator/GU.Throughput.1st.fits",
+    "gvtp_path": "/Users/rain/emulator/GV.Throughput.1st.fits",
+    "gitp_path": "/Users/rain/emulator/GI.Throughput.1st.fits",
+
+    "radi": 100,
+    "expt": 150,
+    "expnum": 4,
+    "guRes": 241,
+    "gu_wave_mid": 3375,
+    "gvRes": 263,
+    "gv_wave_mid": 5250,
+    "giRes": 270,
+    "gi_wave_mid": 8100,
+    "arcsecperpix": 0.074,
+    "dc_value": 0.02,
+    "GUwavemin": 2450,
+    "GUwavemax": 4200,
+    "GVwavemin": 3800,
+    "GVwavemax": 6600,
+    "GIwavemin": 6000,
+    "GIwavemax": 10500, 
+
+    "INITIAL INDEX OF EL DETECTION IN GV BAND": " ",
+    "gv_init_idx": 30,
+
+    "END INDEX OF EL DETECTION IN GV BAND": " ",
+    "gv_end_idx": 530,
+
+    "INITIAL INDEX OF EL DETECTION IN GI BAND": " ",
+    "gi_init_idx": 20,
+
+    "END INDEX OF EL DETECTION IN GI BAND": " ",
+    "gi_end_idx": 520,
+
+    "EL DETECTION THRESHOLD IN NOISY SPECTRA": " ",
+    "noisy_el_detect_th": 1.5,
+
+    "EL DETECTION THRESHOLD IN INTRINSIC SPECTRA": " ",
+    "intri_el_detect_th": 1.2,
+
+    "EL CENTER WAVELENGTH DIFFERENCE BETWEEN INTRINSIC AND NOISY SPECTRA": " ",
+    "el_detect_success_th": 50,
+
+    "ASSUMED EL WIDTH IN GV BAND (IN INDEX)": " ",
+    "gv_elwidth": 40, 
+
+    "ASSUMED EL WIDTH IN GI BAND (IN INDEX)": " ",
+    "gi_elwidth": 30
+}
