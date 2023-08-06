@@ -7,13 +7,12 @@ Therefore, the slitless spectroscopic redshift survey of the China Space Station
 
 In order to investigate these key points, we established an emulator based on empirical relations of small samples which is capable of quickly generating a hundred million simulated 1-D slitless spectra. 
 We introduce the scientific goals, design concepts, instrumental parameters, and computational methods used in the emulator, as well as how the simulated CSST slitless spectra are generated. 
-The self-blending effects caused by galaxy morphological parameters, e.g., Sersic ($n$), effective radius ${\rm (R_e)}$, position angle (${\rm PA}$), and axial ratio (${\rm b/a}$) on the 1-D slitless spectra are considered in our simulation. 
-The emission lines of each spectrum are detected to pick out emission line galaxies for further study of redshift survey.
-In addition, we also develop an algorithm to estimate the overlap contamination rate of our mock data in the dense galaxy clusters. 
+The self-blending effects caused by galaxy morphological parameters, e.g., Sers\'{\i}c ($n$), effective radius ${\rm (R_e)}$, position angle (${\rm PA}$), and axis ratio (${\rm b/a}$) on the 1-D slitless spectra are considered in our simulation. 
+In addition, we also develop a module to estimate the overlap contamination rate of our mock data in the dense galaxy clusters. 
+With a high-resolution mock galaxy spectra library of $\sim$ 140 million galaxies generated from DESI LS DR9, we obtained the corresponding simulated CSST slitless spectra with our emulator. 
 
-With a high-resolution mock galaxy spectra library of ~ 140 million samples generated from DESI DR9, we obtained the corresponding simulated CSST slitless spectra with our emulator. 
 Our results indicate that these mock spectra data can be used to study the dependence of measurement errors on different types of galaxy redshifts due to instrument and observation effects. 
-Furthermore, we are able to analyze the feasibility of the CSST slitless spectroscopic redshift survey and offer reasonable observation strategies and constraints for constructing the mock galaxy catalog. 
+Furthermore, we are able to analyze the feasibility of the CSST slitless spectroscopic redshift survey and offer reasonable constraints for constructing the mock galaxy catalog and observation strategies. 
 
 # Flowchart
 ![Flowchart of CSST grism emulator](https://github.com/RainW7/CSST-grism-emulator/blob/main/flowchart.png)
@@ -92,6 +91,11 @@ Detailed structures:
 ├── detect_el_elnumber
 └── detect_el_snr
 ```
+
+----------23/08/06 update----------
+
+1. Divided the files into 3 documents, the basic files used for the emulator, the main Python files of the emulator, and some of the used jupyter notebooks.
+2. Uploaded some jyputer notebooks that I created and used during the development of the emulator.
 
 ----------23/07/19 update----------
 
