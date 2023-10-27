@@ -2,17 +2,7 @@
 Some work about the CSST grism emulator
 
 # Abstract
-The accuracy of spectroscopic redshift measurement is essential for cosmic surveys since cosmic parameters are extremely sensitive to the purity and completeness of spectroscopic redshift. 
-Therefore, the slitless spectroscopic redshift survey of the China Space Station Telescope (CSST) requires large simulated data to test the dependence. 
-
-In order to investigate these key points, we established an emulator based on empirical relations of small samples which is capable of quickly generating a hundred million simulated 1-D slitless spectra. 
-We introduce the scientific goals, design concepts, instrumental parameters, and computational methods used in the emulator, as well as how the simulated CSST slitless spectra are generated. 
-The self-blending effects caused by galaxy morphological parameters, e.g., Sers\'{\i}c ($n$), effective radius ${\rm (R_e)}$, position angle (${\rm PA}$), and axis ratio (${\rm b/a}$) on the 1-D slitless spectra are considered in our simulation. 
-In addition, we also develop a module to estimate the overlap contamination rate of our mock data in the dense galaxy clusters. 
-With a high-resolution mock galaxy spectra library of $\sim$ 140 million galaxies generated from DESI LS DR9, we obtained the corresponding simulated CSST slitless spectra with our emulator. 
-
-Our results indicate that these mock spectra data can be used to study the dependence of measurement errors on different types of galaxy redshifts due to instrument and observation effects. 
-Furthermore, we are able to analyze the feasibility of the CSST slitless spectroscopic redshift survey and offer reasonable constraints for constructing the mock galaxy catalog and observation strategies. 
+The Chinese Space Station Telescope (CSST) slitless spectroscopic survey will observe objects to a magnitude limit of $\sim23$\,mag (5$\sigma$, point sources) in $U$, $V$, and $I$ over 17,500 square degrees.  The spectroscopic observations are expected to be highly efficient and complete for mapping galaxies over $0<z<1$ with secure redshift measurements at spectral resolutions of $R\sim200$, providing unprecedented datasets for cosmological studies.  To examine the survey potential in a quantitative manner, we develop a software tool, namely the CSST Emulator for Slitless Spectroscopy (\texttt{CESS}), to quickly generate simulated one-dimensional slitless spectra with limited computing resources.  
 
 # Flowchart
 ![Flowchart of CSST grism emulator](https://github.com/RainW7/CSST-grism-emulator/blob/main/flowchart.png)
@@ -92,6 +82,12 @@ Detailed structures:
 └── detect_el_snr
 ```
 
+----------23/10/27 update----------
+
+1. Update the emulator version 0.8.
+2. For those sources with error data, the emulator creates a nan spectrum now. 
+3. 
+
 ----------23/08/06 update----------
 
 1. Divided the files into 3 documents, the basic files used for the emulator, the main Python files of the emulator, and some of the used jupyter notebooks.
@@ -99,7 +95,7 @@ Detailed structures:
 
 ----------23/07/19 update----------
 
-Main files for emulator version 0.7 is uploaded！
+Main files for emulator version 0.7 are uploaded！
 1. main.py for the convolution for the CSST intrinsic slitless spectra, simulating observed slitless spectra and emission line detection.
 2. morphology.py for the 2-D parameters fitting and 2-D profile distribution function extraction.
 3. utils.py for some small functions.
