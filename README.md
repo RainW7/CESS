@@ -85,7 +85,7 @@ Detailed structures:
 ----------24/06/30 update----------
 1. Update the emulator version 0.8.4.
 2. Add photometric magnitude (AB mag) estimation for CSST photometry.
-3. Update the kernel convolution function following the ```varsmooth``` function in ```pPXF``` package from [url]https://pypi.org/project/ppxf/[\url] by Cappellari
+3. Update the kernel convolution function following the ```varsmooth``` function in ```pPXF``` package from https://pypi.org/project/ppxf/ by Cappellari
 
 ----------23/10/27 update----------
 
