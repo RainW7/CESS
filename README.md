@@ -82,11 +82,15 @@ Detailed structures:
 └── detect_el_snr
 ```
 
+----------24/06/30 update----------
+1. Update the emulator version 0.8.4.
+2. Add photometric magnitude (AB mag) estimation for CSST photometry.
+3. Update the kernel convolution function following the '''varsmooth``` function in '''pPXF``` package from ''https://pypi.org/project/ppxf/`` by Cappellari
+
 ----------23/10/27 update----------
 
 1. Update the emulator version 0.8.
 2. For those sources with error data, the emulator creates a nan spectrum now. 
-3. 
 
 ----------23/08/06 update----------
 
