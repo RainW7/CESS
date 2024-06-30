@@ -1,5 +1,5 @@
-# CSST-grism-emulator
-Some work about the CSST grism emulator
+# CSST Emulator for Slitless Spectroscopy (CESS)
+Some work about the emulator for CSST slitless spectroscopy.
 
 # Abstract
 The Chinese Space Station Telescope (CSST) slitless spectroscopic survey will observe objects to a magnitude limit of ~ 23 mag (5σ, point sources) in U, V, and I over 17,500 square degrees.  The spectroscopic observations are expected to be highly efficient and complete for mapping galaxies over 0<z<1 with secure redshift measurements at spectral resolutions of R ~ 200, providing unprecedented datasets for cosmological studies.  To examine the survey potential in a quantitative manner, we develop a software tool, namely the CSST Emulator for Slitless Spectroscopy (CESS), to quickly generate simulated one-dimensional slitless spectra with limited computing resources.  
