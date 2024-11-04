@@ -13,7 +13,7 @@ Change log:
 1.  Setting an upper limit for electron spectra with 90000 e-.
 2.  Add a mask array in the noise-adding function to mask the too noisy to be used data points, the mask for each source is universal.
 3.  Change the wavelength calibration error from 1% to 0.1%-0.5%.
-4.  For the valid source (e.g., with extremely high redshift which is not able to be simulated), emulator produces a empty
+4.  For the valid source (e.g., with extremely high redshift which is not able to be simulated), emulator produces a NaN array
 '''
 
 import numpy as np
