@@ -8,79 +8,80 @@ The Chinese Space Station Telescope (CSST) slitless spectroscopic survey will ob
 ![Flowchart of CSST grism emulator](https://github.com/RainW7/CSST-grism-emulator/blob/main/flowchart.png)
 
 # result file data structure
-How to show the data structure: 
+How to display the data structure: 
 ```python
 import h5py
-file = h5py.File('/Users/rain/emulator/seedcat_0702/seedcat2_0702_0_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5','r')
-for name in file1:
+
+file = h5py.File('CSST_grism_seedcat2_0_MzLS_0csp_sfh201_bc2003_hr_stelib_kroup_neb_300r_i0100_2dal8_10_inoise4_23349.hdf5','r')
+
+for name in file:
     print(name)
-    if isinstance(file1[name], h5py.Group):
-        for subname in file1[name]:
+    if isinstance(file[name], h5py.Group):
+        for subname in file[name]:
            print(f"  {subname}")
 ```
-How to show column names of parameters: 
-```python
-file['parameters'].attrs['name'],
-array(['RA', 'Dec', 'z_best', 'MAG_G', 'MAG_R', 'MAG_Z', 'n', 'Re', 'PA',
-       'baratio', 'str_mass', 'gu_rms_in_e', 'gv_rms_in_e', 'gi_rms_in_e',
-       'gu_snr_mean', 'gv_snr_mean', 'gi_snr_mean', 
-       'gu_wave_off', 'gv_wave_off', 'gi_wave_off', #wavelength error
-       'gv_el_flag', 'gi_el_flag'], dtype=object) #emission line flags,
-  #0 = no el detection, 1 = only intrinsic el detection, 2 = both intrinsic and noisy el detection
-```
+
 Detailed structures: 
 ```
-'ID' # ids of each source in the DESI photometry catalog
-'parameters' # paramters of each source, in array
+'ID'                     # ids of each source in the DESI photometry catalog
+'data_mask'              # mask for available sources, with data_mask = 1 means available sources and data_mask = 2 means invaild sources
+'parameters_desi'        # parameters of DESI LS DR9 catalog for each source, in array,
+                                including 'RA', 'Dec', 'z_best', 'MAG_G','MAG_R','MAG_Z',
+                                          'n','Re','PA','baratio','str_mass',
+'parameters_grism'       # parameters of simulated grism spectra for each source, in array,
+                                including 'gu_rms_in_e','gv_rms_in_e','gi_rms_in_e', (root mean square of noise for each source in electrons)
+                                          'gu_snr_mean','gv_snr_mean','gi_snr_mean', (mean signal-to-noise ratio for each source)
+                                          'gu_wave_off','gv_wave_off','gi_wave_off', (wavelength calibration error)
+                                          'gv_el_flag','gi_el_flag' (0 = no el detection, 1 = only intrinsic el detection, 2 = both intrinsic and noisy el detection)
+'parameters_phot'        # parameters of simulated photometric data for each source, in array,
+                                including 'mag_nuv','mag_u','mag_g','mag_r','mag_i','mag_z','mag_y',
+                                          'magerr_nuv','magerr_u','magerr_g','magerr_r','magerr_i','magerr_z','magerr_y',
+                                          'snr_nuv','snr_u','snr_g','snr_r','snr_i','snr_z','snr_y'
 ```
 ```
 'GU' # hdf5 group
-├── wave
-├── flux_ujy
-├── flux_ujy_with_noise
-├── ferr
-├── flux_elec
-└── snr
+├── wave                  # wavelength grid
+├── flux_elec             # simulated CSST observed slitless spectra in electrons
+├── flux_ujy              # simulated CSST intrinsic slitless spectra in ujy
+├── flux_ujy_with_noise   # simulated CSST observed slitless spectra with noise in ujy
+├── ferr                  # simulated CSST observed slitless spectra error in ujy
+├── snr                   # signal-to-noise ratio of each spectrum
+├── snr_mask              # signal-to-noise ratio mask of each spectrum (true for available data points)
+└── spec_mask             # simulated CSST observed slitless spectra mask (true for available data points)
 ```
 ```
-'GV' # hdf5 group
+'GV' and 'GI' # hdf5 group
+
 -----simulated spectrum information-----
-├── wave  # wavelength grid
-├── flux_ujy # simulated CSST intrinsic slitless spectra in ujy
-├── flux_ujy_with_noise # simulated CSST observed slitless spectra with noise in ujy
-├── ferr # simulated CSST observed slitless spectra error in ujy
-├── flux_elec # simulated CSST observed slitless spectra in electrons
-├── snr # signal-to-noise ratio of each spectrum   
------intrinsic spectrum emission line information-----
-├── intri_el_id # ids for source detected with emission lines in intrinsic spectra, i.e., 'flux_ujy'
-├── intri_el_wave # arrays of the emission line wavelengths in intrinsic spectra
-├── intri_el_idx # arrays of the emission line wavelength grid corresponding index in intrinsic spectra
-├── intri_el_elnumber # numbers of detected emission lines in intrinsic spectra    
------noisy spectrum emission line information-----
-├── detect_el_id # ids for source detected with emission lines in noisy spectra, i.e., 'flux_ujy_with_noise'
-├── detect_el_wave # arrays of the emission line wavelengths in noisy spectra
-├── detect_el_idx # arrays of the emission line wavelength grid corresponding index in noisy spectra
-├── detect_el_elnumber # numbers of detected emission lines in noisy spectra
-└── detect_el_snr # mean snr of detected emission lines in noisy spectra
-```
-```
-'GI' # hdf5 group
 ├── wave
-├── flux_ujy
+├── flux_elec
 ├── flux_ujy_with_noise
 ├── ferr
-├── flux_elec
+├── flux_ujy
 ├── snr
-├── intri_el_id
-├── intri_el_wave
-├── intri_el_idx
-├── intri_el_elnumber
-├── detect_el_id
-├── detect_el_wave
-├── detect_el_idx
-├── detect_el_elnumber
-└── detect_el_snr
+├── snr_mask
+└── spec_mask
+
+-----intrinsic spectrum emission line information-----
+├── intri_el_id           # ids for source detected with emission lines in intrinsic spectra, i.e., 'flux_ujy'
+├── intri_el_wave         # arrays of the emission line wavelengths in intrinsic spectra
+├── intri_el_idx          # arrays of the emission line wavelength grid corresponding index in intrinsic spectra
+├── intri_el_elnumber     # numbers of detected emission lines in intrinsic spectra
+
+-----noisy spectrum emission line information-----
+├── detect_el_id          # ids for source detected with emission lines in noisy spectra, i.e., 'flux_ujy_with_noise'
+├── detect_el_wave        # arrays of the emission line wavelengths in noisy spectra
+├── detect_el_idx         # arrays of the emission line wavelength grid corresponding index in noisy spectra
+├── detect_el_elnumber    # numbers of detected emission lines in noisy spectra
+└── detect_el_snr         # mean snr of detected emission lines in noisy spectra
 ```
+----------24/11/04 update----------
+1. Update the emulator version 0.8.5.
+2. Add switch in the running command for performing the following functions or not (default is False for all these four functions):
+   (1).morphlogical effect; (2).wavelength calibration effect; (3).photometric simulation; (4).emission line detection
+   e.g., to perform all the functions as ```python run.py morph=true wave_cal=true photo=true el_detect=true```
+         or do not perform the functions ```python run.py morph=false wave_cal=false photo=false el_detect=false```
+3. Update the main code to solve some extreme spectrum data (start from line 498 in /CESS_v0.8.5/run.py)
 
 ----------24/06/30 update----------
 1. Update the emulator version 0.8.4.
@@ -90,7 +91,7 @@ Detailed structures:
 ----------23/10/27 update----------
 
 1. Update the emulator version 0.8.
-2. For those sources with error data, the emulator creates a nan spectrum now. 
+2. For those sources with error data, the emulator creates a nan array now. 
 
 ----------23/08/06 update----------
 
