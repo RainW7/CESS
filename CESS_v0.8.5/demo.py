@@ -2,10 +2,10 @@
 # -*-coding:utf-8 -*-
 '''
 @Env     		:   grizli (Python 3.7.11) on Macbook Pro
-@File    		:   ~/emulator/emulator_v0.8/demo.py
+@File    		:   ~/emulator/emulator_v0.8.5/demo.py
 @Time    		:   2024/04/30 12:24:22
 @Author  		:   Run Wen
-@Version 		:   0.8
+@Version 		:   0.8.5
 @Contact 		:   wenrun@pmo.ac.cn
 @Description	:   create demo fig for simulated CSST slitless spectrum for the new DESI-phot + SDSS-spec data
 '''
