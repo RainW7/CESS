@@ -2,10 +2,10 @@
 # -*-coding:utf-8 -*-
 '''
 @Env     		:   grizli
-@File    		:   ~/emulator/emulator_v0.8/create_lib.py
-@Time    		:   2023/08/14 12:52:05
+@File    		:   ~/emulator/emulator_v0.8.5/create_lib.py
+@Time    		:   2024/08/14 12:52:05
 @Author  		:   Run Wen
-@Version 		:   0.8
+@Version 		:   0.8.5
 @Contact 		:   wenrun@pmo.ac.cn
 @Description	:   To create height and width profile distribution library, change the series values to what you want.
 '''
