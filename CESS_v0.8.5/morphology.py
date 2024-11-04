@@ -2,10 +2,10 @@
 # -*-coding:utf-8 -*-
 '''
 @Env     		:   grizli
-@File    		:   ~/emulator/emulator_v0.8/morphology.py
-@Time    		:   2023/08/14 16:31:49
+@File    		:   ~/emulator/emulator_v0.8.5/morphology.py
+@Time    		:   2024/08/14 16:31:49
 @Author  		:   Run Wen
-@Version 		:   0.8
+@Version 		:   0.8.5
 @Contact 		:   wenrun@pmo.ac.cn
 @Description	:   Add 2d morphological parameters to the galaxy and get 2d profile distribution functions. 
 
