@@ -1,0 +1,8 @@
+astropy==4.3.1
+galsim==2.3.4
+h5py==3.6.0
+matplotlib==3.5.1
+numpy==1.21.5
+photutils==1.0.2
+scipy==1.7.3
+specutils==1.8.1

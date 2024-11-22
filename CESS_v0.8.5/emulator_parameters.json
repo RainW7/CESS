@@ -1,0 +1,88 @@
+{
+    "seedcat_path": "/Users/rain/emulator/CESS_input/",
+    "output_path": "/Users/rain/emulator/CESS_output/",
+    "bkg_spec_path": "/Users/rain/emulator/CESS_v0.8.5/basic_file/bkg_spec.fits",
+
+    "gems_path": "/Users/rain/emulator/CESS_v0.8.5/basic_file/gems_cat.fits",
+
+    "widthlib_pkl": "/Users/rain/emulator/CESS_v0.8.5/basic_file/widthlib_20x20x10x10.pkl",
+    "heightlib_pkl": "/Users/rain/emulator/CESS_v0.8.5/basic_file/heightlib_20x20x10x10.pkl",
+
+    "gutp_path": "/Users/rain/emulator/CESS_v0.8.5/csst_sls_tp/GU.Throughput.1st.fits",
+    "gvtp_path": "/Users/rain/emulator/CESS_v0.8.5/csst_sls_tp/GV.Throughput.1st.fits",
+    "gitp_path": "/Users/rain/emulator/CESS_v0.8.5/csst_sls_tp/GI.Throughput.1st.fits",
+
+    "nuvtp_path": "/Users/rain/emulator/CESS_v0.8.5/csst_phot_tp/csst_phot.nuv.fits",
+    "utp_path": "/Users/rain/emulator/CESS_v0.8.5/csst_phot_tp/csst_phot.u.fits",
+    "gtp_path": "/Users/rain/emulator/CESS_v0.8.5/csst_phot_tp/csst_phot.g.fits",
+    "rtp_path": "/Users/rain/emulator/CESS_v0.8.5/csst_phot_tp/csst_phot.r.fits",
+    "itp_path": "/Users/rain/emulator/CESS_v0.8.5/csst_phot_tp/csst_phot.i.fits",
+    "ztp_path": "/Users/rain/emulator/CESS_v0.8.5/csst_phot_tp/csst_phot.z.fits",
+    "ytp_path": "/Users/rain/emulator/CESS_v0.8.5/csst_phot_tp/csst_phot.y.fits",
+
+    "radi": 100,
+    "expt": 150,
+    "expnum": 4,
+    "arcsecperpix": 0.074,
+    "dc_value": 0.02,
+
+    "gu_Res": 225,
+    "gu_wave_mid": 3375,
+    "gu_dlambda": 15,
+    "gu_ree80": 0.17,
+
+    "gv_Res": 250,
+    "gv_wave_mid": 5250,
+    "gv_dlambda": 21,
+    "gv_ree80": 0.19,
+
+    "gi_Res": 250,
+    "gi_wave_mid": 8100,
+    "gi_dlambda": 33,
+    "gi_ree80": 0.19,
+
+    "gu_start_wl": 2200,
+    "gu_end_wl": 4400,
+    "gu_min_wl": 2450,
+    "gu_max_wl": 4200,
+
+    "gv_start_wl": 3600,
+    "gv_end_wl": 6800,
+    "gv_min_wl": 3800,
+    "gv_max_wl": 6600,
+
+    "gi_start_wl": 5900,
+    "gi_end_wl": 12500,
+    "gi_min_wl": 6100,
+    "gi_max_wl": 10500,
+
+    "INITIAL INDEX OF EL DETECTION IN GU BAND": " ",
+    "gu_init_idx": 20,
+    "END INDEX OF EL DETECTION IN GU BAND": " ",
+    "gu_end_idx": 318,
+
+    "INITIAL INDEX OF EL DETECTION IN GV BAND": " ",
+    "gv_init_idx": 20,
+    "END INDEX OF EL DETECTION IN GV BAND": " ",
+    "gv_end_idx": 373,
+
+    "INITIAL INDEX OF EL DETECTION IN GI BAND": " ",
+    "gi_init_idx": 20,
+    "END INDEX OF EL DETECTION IN GI BAND": " ",
+    "gi_end_idx": 496,
+
+    "EL DETECTION THRESHOLD IN NOISY SPECTRA": " ",
+    "noisy_el_detect_th": 1.5,
+    
+    "EL DETECTION THRESHOLD IN INTRINSIC SPECTRA": " ",
+    "intri_el_detect_th": 1.2,
+
+    "EL CENTER WAVELENGTH DIFFERENCE BETWEEN INTRINSIC AND NOISY SPECTRA": " ",
+    "el_detect_success_th": 50,
+
+    "ASSUMED EL WIDTH IN GV BAND (IN INDEX)": " ",
+    "gv_elwidth": 40, 
+
+    "ASSUMED EL WIDTH IN GI BAND (IN INDEX)": " ",
+    "gi_elwidth": 30
+}
