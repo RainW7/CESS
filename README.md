@@ -1,18 +1,18 @@
 # CSST Emulator for Slitless Spectroscopy (CESS)
-Some work about the emulator for CSST slitless spectroscopy.
+Works of emulator for the CSST slitless spectroscopy.  Publicated paper is ![Wen et al. (2004)](https://ui.adsabs.harvard.edu/abs/2024MNRAS.528.2770W/abstract).  The version of CESS used in the paper is v0.7 which is reserved in this repository.  And the latest version of CESS is CESS_v0.8.5, which is available at the 'Releases'. 
 
 # Abstract
 The Chinese Space Station Telescope (CSST) slitless spectroscopic survey will observe objects to a magnitude limit of ~ 23 mag (5σ, point sources) in U, V, and I over 17,500 square degrees.  The spectroscopic observations are expected to be highly efficient and complete for mapping galaxies over 0<z<1 with secure redshift measurements at spectral resolutions of R ~ 200, providing unprecedented datasets for cosmological studies.  To examine the survey potential in a quantitative manner, we develop a software tool, namely the CSST Emulator for Slitless Spectroscopy (CESS), to quickly generate simulated one-dimensional slitless spectra with limited computing resources.  
 
 # Flowchart
-![Flowchart of CSST grism emulator](https://github.com/RainW7/CSST-grism-emulator/blob/main/flowchart.png)
+![Flowchart of CSST grism emulator](https://github.com/RainW7/CESS/blob/main/flowchart.png)
 
 # result file data structure
 How to display the data structure: 
 ```python
 import h5py
 
-file = h5py.File('CSST_grism_seedcat2_0_MzLS_0csp_sfh201_bc2003_hr_stelib_kroup_neb_300r_i0100_2dal8_10_inoise4_23349.hdf5','r')
+file = h5py.File('CSST_grism_23514_seedcat2_0420_1204_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5','r') # the output file in hdf5 of CESS
 
 for name in file:
     print(name)
@@ -21,10 +21,10 @@ for name in file:
            print(f"  {subname}")
 ```
 
-Detailed structures: 
+Detailed full structures (with morphological effects, wavelength carlibration effects and emission line detections performed): 
 ```
 'ID'                     # ids of each source in the DESI photometry catalog
-'data_mask'              # mask for available sources, with data_mask = 1 means available sources and data_mask = 2 means invaild sources
+'data_mask'              # mask for available sources, with data_mask = 1 means available sources and data_mask = 2 means invaild sources due to some reasons
 'parameters_desi'        # parameters of DESI LS DR9 catalog for each source, in array,
                                 including 'RA', 'Dec', 'z_best', 'MAG_G','MAG_R','MAG_Z',
                                           'n','Re','PA','baratio','str_mass',
@@ -75,13 +75,18 @@ Detailed structures:
 ├── detect_el_elnumber    # numbers of detected emission lines in noisy spectra
 └── detect_el_snr         # mean snr of detected emission lines in noisy spectra
 ```
+----------24/11/22 update----------
+1. Fix some bugs in the main.py, morphology.py and run.py.
+2. Update the run.py script (named run_gravity_zouhu.py) used in the Gravity for the following emission-line galaxies redshift measurements in Sui et al. (submitted).
+3. Delete version 0.8.4.
+
 ----------24/11/04 update----------
 1. Update the emulator version 0.8.5.
 2. Add switch in the running command for performing the following functions or not (default is False for all these four functions):
    (1).morphlogical effect; (2).wavelength calibration effect; (3).photometric simulation; (4).emission line detection
    e.g., to perform all the functions as ```python run.py morph=true wave_cal=true photo=true el_detect=true```
          or do not perform the functions ```python run.py morph=false wave_cal=false photo=false el_detect=false```
-3. Update the main code to solve some extreme spectrum data (start from line 498 in /CESS_v0.8.5/run.py)
+3. Update the main code to solve some extreme spectrum data (start from line 506 in /CESS_v0.8.5/run.py)
 
 ----------24/06/30 update----------
 1. Update the emulator version 0.8.4.
