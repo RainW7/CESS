@@ -7,6 +7,9 @@ The Chinese Space Station Telescope (CSST) slitless spectroscopic survey will ob
 # Flowchart
 ![Flowchart of CSST grism emulator](https://github.com/RainW7/CESS/blob/main/flowchart.png)
 
+# Manual
+The manual of CESS is uploaded for version 0.8.5
+
 # result file data structure
 How to display the data structure: 
 ```python
@@ -75,6 +78,11 @@ Detailed full structures (with morphological effects, wavelength carlibration ef
 ├── detect_el_elnumber    # numbers of detected emission lines in noisy spectra
 └── detect_el_snr         # mean snr of detected emission lines in noisy spectra
 ```
+
+----------24/12/30 update----------
+1. Upload the Manual for CESS (version 0.8.5)
+2. Update the demo.ipynb
+
 ----------24/11/22 update----------
 1. Fix some bugs in the main.py, morphology.py and run.py.
 2. Update the run.py script (named run_gravity_zouhu.py) used in the Gravity for the following emission-line galaxies redshift measurements in Sui et al. (submitted).
