@@ -8,7 +8,7 @@ The Chinese Space Station Telescope (CSST) slitless spectroscopic survey will ob
 ![Flowchart of CSST grism emulator](https://github.com/RainW7/CESS/blob/main/flowchart.png)
 
 # Manual
-The ![Manual](https://github.com/RainW7/CESS/blob/main/Manual%20for%20CESS%20(version%200.8.5%2C%202024.12.30).pdf) of CESS is uploaded for version 0.8.5
+The [Manual](https://github.com/RainW7/CESS/blob/main/Manual%20for%20CESS%20(version%200.8.5%2C%202024.12.30).pdf) of CESS is uploaded for version 0.8.5
 
 # result file data structure
 How to display the data structure: 
