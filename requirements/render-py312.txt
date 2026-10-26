@@ -1,0 +1,4 @@
+# Optional legacy GalSim renderer; declaration is not render validation.
+# GalSim is absent from the initial macOS ARM64 migration environment.
+-r core-py312.txt
+galsim==2.8.5

@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#PBS -N cess
+#PBS -j oe
+# Add ONE site-confirmed resource/queue syntax; examples are in README.md.
+# No CPU/memory/walltime/queue request is assumed by this draft.
+# CESS_INPUT may be one catalogue or a directory; workers process separate files
+# unless CESS_CHUNK_SIZE explicitly enables source-row chunks.
+set -Eeuo pipefail
+
+: "${CESS_REPO:?Set the absolute CESS_REPO path}"
+: "${CESS_MANIFEST:?Set the absolute CESS_MANIFEST path}"
+[[ "$CESS_REPO" = /* && "$CESS_MANIFEST" = /* ]] || { printf 'CESS paths must be absolute\n' >&2; exit 2; }
+CESS_LOG_DIR="${CESS_LOG_DIR:-$(dirname -- "$CESS_MANIFEST")/logs}"
+[[ "$CESS_LOG_DIR" = /* ]] || { printf 'CESS_LOG_DIR must be absolute\n' >&2; exit 2; }
+mkdir -p -- "$CESS_LOG_DIR"
+job_tag="${PBS_JOBID:-local}"
+job_tag="${job_tag//[^a-zA-Z0-9_.-]/_}"
+CESS_LOG_FILE="$(mktemp "$CESS_LOG_DIR/cess.${job_tag}.log.XXXXXX")"
+printf 'CESS log: %s\n' "$CESS_LOG_FILE"
+exec >>"$CESS_LOG_FILE" 2>&1
+trap 'result=$?; printf "CESS exit=%s at %s\n" "$result" "$(date -u +%FT%TZ)"; exit "$result"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+printf 'CESS start at %s; job=%s\n' "$(date -u +%FT%TZ)" "${PBS_JOBID:-local}"
+
+source "$CESS_REPO/scripts/gravity/preflight.sh"
+cess_prepare
+cd -- "$CESS_REPO"
+CESS_COMMAND+=(--manifest "$CESS_MANIFEST")
+if [[ "$CESS_RESUME" == 1 ]]; then
+    CESS_COMMAND+=(--resume)
+fi
+printf 'Run command:'; printf ' %q' "${CESS_COMMAND[@]}"; printf '\n'
+"${CESS_COMMAND[@]}"

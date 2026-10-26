@@ -1,0 +1,3 @@
+# Optional Tk desktop viewer; Tcl/Tk is supplied by the Python/OS environment.
+-r core-py312.txt
+matplotlib==3.11.2

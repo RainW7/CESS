@@ -1,136 +1,356 @@
-# CSST Emulator for Slitless Spectroscopy (CESS)
-Works of emulator for the CSST slitless spectroscopy.  Publicated paper is [Wen et al. (2024)](https://ui.adsabs.harvard.edu/abs/2024MNRAS.528.2770W/abstract).  The version of CESS used in the paper is v0.7 which is reserved in this repository.  And the latest version of CESS is CESS_v0.8.5, which is available at the 'Releases'. 
+# CESS v0.9.0
 
-# Abstract
-The Chinese Space Station Telescope (CSST) slitless spectroscopic survey will observe objects to a magnitude limit of ~ 23 mag (5σ, point sources) in U, V, and I over 17,500 square degrees.  The spectroscopic observations are expected to be highly efficient and complete for mapping galaxies over 0<z<1 with secure redshift measurements at spectral resolutions of R ~ 200, providing unprecedented datasets for cosmological studies.  To examine the survey potential in a quantitative manner, we develop a software tool, namely the CSST Emulator for Slitless Spectroscopy (CESS), to quickly generate simulated one-dimensional slitless spectra with limited computing resources.  
+**CSST Emulator for Slitless Spectroscopy**
 
-# Flowchart
-![Flowchart of CSST grism emulator](https://github.com/RainW7/CESS/blob/main/flowchart.png)
+English | [简体中文](README_zh-CN.md)
 
-# Manual
-The [Manual](https://github.com/RainW7/CESS/blob/main/Manual%20for%20CESS%20(version%200.8.5%2C%202024.12.30).pdf) of CESS is uploaded for version 0.8.5
+Version: v0.9.0 · Python 3.12
 
-# result file data structure
-How to display the data structure: 
-```python
-import h5py
+CESS reads galaxy spectral templates and catalogues produced by BayeSED and
+generates one-dimensional CSST GU, GV and GI slitless spectra under specified
+instrument-response, observing and morphology assumptions. It is intended for
+large galaxy samples: convert existing SEDs into noisy spectra, uncertainties,
+signal-to-noise ratios and measurements without first rendering a full detector image.
 
-file = h5py.File('CSST_grism_23514_seedcat2_0420_1204_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5','r') # the output file in hdf5 of CESS
+Start with [installation](docs/INSTALL.md) and the [quick start](docs/QUICKSTART.md).
+The [Bash command manual](docs/COMMANDS.md) explains commands step by step;
+the [user guide](docs/USER_GUIDE.md) covers parameters, inputs and products.
 
-for name in file:
-    print(name)
-    if isinstance(file[name], h5py.Group):
-        for subname in file[name]:
-           print(f"  {subname}")
+After installing and activating the environment, run this in the directory containing `input.hdf5`:
+
+```bash
+cess simulate -i input.hdf5 -o results --all-effects
 ```
 
-Detailed full structures (with morphological effects, wavelength carlibration effects and emission line detections performed): 
+The default is **one complete output HDF5 per input file**, retaining all source
+rows, including flagged invalid sources. Replace the file with a directory to
+process its HDF5 inputs. The default `-j 1` processes files sequentially;
+explicit `-j N` allows up to N concurrent file tasks when memory permits.
+`--all-effects` enables the four optional science switches together.
+
+## 1. Purpose and version
+
+| Item | Current behavior |
+| --- | --- |
+| Software | `0.9.0`, preserving and restructuring the 1D simulation workflow |
+| Release status | Local source and artifacts are prepared as v0.9.0; consult the repository for the actual GitHub release |
+| Main input | BayeSED HDF5 galaxy templates, JSON configuration and supporting resources |
+| Main output | GU/GV/GI 1D spectra, optional photometry and line products, and optional run manifests |
+| Python | `>=3.12,<3.13`, in an environment created for the target platform |
+| Modern layout | Structured HDF5 schema 3.0; compatible schema 2.5 is available explicitly |
+
+Typical uses include sample observability studies, spectral S/N distributions,
+emission-line detection and measurement experiments, and paired comparisons of
+wavelength-calibration errors. Check the models and resources for the research
+question. CESS does not perform BayeSED fitting, automatic redshift measurement
+or a scientific completeness calibration.
+
+## 2. Features
+
+| Feature | Capability | Important distinction |
+| --- | --- | --- |
+| 1D spectroscopy | GU/GV/GI model and noisy spectra with uncertainties | Preserves the existing BayeSED input contract |
+| Response and detector noise | Throughput folding, expected electrons, sky, dark current and read noise | Rates, counts, calibrated fluxes and errors have separate definitions |
+| Morphology broadening | Uses sampled galaxy morphology and stored profile resources | Does not import arbitrary observed 2D galaxy images |
+| Wavelength-calibration error | Resampling on a common nominal pixel grid | Propagates variance, masks and neighboring-pixel covariance |
+| `paired-wce` | Outputs branches without and with wavelength error | The branches share a noise realization |
+| Seven-band photometry | NUV/u/g/r/i/z/y response-weighted measurements | Model, observed value, error, S/N and status are separate |
+| Zeroth-order photometry | Standard-mode GU/GV/GI passband-integrated observations | Distinct from historical `_0th` 1D diagnostic proxies |
+| Emission lines | Detection, truth matching, missed/false-positive diagnostics and window measurements | Primarily GV/GI; candidates are not automatically identified atomic transitions |
+| Product postprocessing | `el-detect` on schema 2.5 or 3.0 spectra | Inherits source mapping and parent-model definitions |
+| Batch scheduling | Files, directories, globs, source intervals, chunks and bounded multiprocessing | No manual filename-list editing |
+| Reproducibility | Seeds, source-level random streams, provenance and strict manifest resume | Existing products are never silently overwritten |
+| Product tools | Unified reader, plotting, stratified sampling, subset export and chunk merging | Named fields and units; merging does not recalculate spectra |
+| Desktop HDF5 viewer | Structure/data browser, per-source spectra, X-Y plots and CSV/figure export | Optional Tk interface; English/Chinese; opens inputs read-only |
+| Advanced morphology | Positive MGE libraries and optional joint-strip extraction | Explicit aperture and PSF/LSF assumptions required |
+
+The four optional `simulate` switches are **off by default**:
+`--morphology`, `--wavelength-error`, `--photometry` and `--emission-lines`.
+Enable the required effects explicitly or use `--all-effects`.
+The default mode is `standard`; the default random seed is 0.
+
+## 3. Workflow and models
+
+```text
+BayeSED HDF5 + JSON + throughput/background/morphology resources
+    -> select original source rows; validate fields and units
+rest wavelength -> observed wavelength; smoothing and pixel integration
+    -> integrate the native response and predict source electron rates
+morphology selection, dispersion broadening and spatial extraction
+    -> source + sky + dark current + read noise
+model/noisy spectra, uncertainties, S/N and masks
+    -> optional wavelength resampling and covariance propagation
+optional photometry, zeroth-order integration and line measurements
+    -> atomic publication, provenance and optional manifest updates
+versioned HDF5 products + JSON task records
 ```
-'ID'                     # ids of each source in the DESI photometry catalog
-'data_mask'              # mask for available sources, with data_mask = 1 means available sources and data_mask = 2 means invaild sources due to some reasons
-'parameters_desi'        # parameters of DESI LS DR9 catalog for each source, in array,
-                                including 'RA', 'Dec', 'z_best', 'MAG_G','MAG_R','MAG_Z',
-                                          'n','Re','PA','baratio','str_mass',
-'parameters_grism'       # parameters of simulated grism spectra for each source, in array,
-                                including 'gu_rms_in_e','gv_rms_in_e','gi_rms_in_e', (root mean square of noise for each source in electrons)
-                                          'gu_snr_mean','gv_snr_mean','gi_snr_mean', (mean signal-to-noise ratio for each source)
-                                          'gu_wave_off','gv_wave_off','gi_wave_off', (wavelength calibration error)
-                                          'gv_el_flag','gi_el_flag' (0 = no el detection, 1 = only intrinsic el detection, 2 = both intrinsic and noisy el detection)
-'parameters_phot'        # parameters of simulated photometric data for each source, in array,
-                                including 'mag_nuv','mag_u','mag_g','mag_r','mag_i','mag_z','mag_y',
-                                          'magerr_nuv','magerr_u','magerr_g','magerr_r','magerr_i','magerr_z','magerr_y',
-                                          'snr_nuv','snr_u','snr_g','snr_r','snr_i','snr_z','snr_y'
+
+Input wavelengths are converted from microns to Angstrom and shifted by the
+input redshift. The SED follows the existing BayeSED convention of
+observed-normalized `fnu` in microJy; arbitrary intrinsic luminosity spectra are
+not interchangeable with it. Response calculations integrate over wavelength;
+one throughput value at each output-pixel center does not replace upstream integration.
+
+Noise includes source/background Poisson fluctuations, dark current and Gaussian
+read noise. Spatial extraction pixels and exposures enter the noise-area
+calculation. Background-subtracted fluctuations can be negative and are retained.
+
+Wavelength-calibration error (WCE) uses linear resampling on a common nominal grid,
+rather than a complete instrument wavelength-solution fit. Variance uses squared
+weights; adjacent-pixel covariance is saved. Integrated measurements should use
+the available covariance. The `paired-wce` branches share noise and are not
+independent exposures. Pixel, band-mean, historical peak-neighborhood and
+integrated window-line S/N have different definitions.
+
+The default `spectral_extraction.mode=legacy_full` retains the historical
+full-source signal approximation. `explicit` accepts a source fraction and
+spatial pixel count. `mge_strip` calculates a joint strip and dispersion kernel
+from verified positive Gaussian source components. These conventions are not
+interchangeable by renaming parameters; MGE requires a compatible library and
+explicit PSF/LSF roles. See [scientific models](docs/SCIENCE_MODELS.md) and
+[morphology/MGE](docs/MGE_MODELS.md).
+
+## 4. Inputs and outputs
+
+CESS accepts the existing BayeSED-shaped contract, not an arbitrary HDF5 file.
+
+| Input | Content and units |
+| --- | --- |
+| `ID` | N identifiers, tracked together with original row indices |
+| `parameters` / `parameters_name` | N-by-K values and field names, including required position, magnitude, mass and redshift columns |
+| `best_fit/wavelength_rest` | Shared W-element rest-wavelength vector; conventionally microns |
+| `best_fit/z` | N redshifts |
+| `best_fit/spec_*` | N-by-W SED `fnu`, conventionally microJy; the simulation dataset must be unambiguous |
+| JSON and resources | Runtime paths, instrument/exposure/background settings, responses and morphology resources |
+
+See the user guide for exact names, units and path rules. Check wavelength support,
+source-axis alignment and parameter meanings when changing template libraries.
+
+Modern HDF5 schema 3.0 organizes the result as follows:
+
+```text
+product.hdf5
+├── catalog/       # IDs, original rows, tables, extraction and morphology diagnostics
+├── spectra/       # GU/GV/GI arrays and shared grids
+├── photometry/    # optional seven-band photometry
+├── zero_order/    # standard-mode zeroth-order passband photometry
+├── lines/         # candidates, matches and window measurements
+└── provenance/    # input/config/version/code/resource identities and layout mapping
 ```
+
+All root groups have defined status metadata: presence alone does not mean a
+measurement was enabled or applicable. Spectral arrays are usually
+`(source,pixel)`; wavelengths are Angstrom and flux/error fields are usually
+microJy. GU/GV/GI can have different pixel counts. Read tables by field name,
+`axis_order` and unit.
+
+| Common field | Meaning |
+| --- | --- |
+| `wave` | Shared observed-wavelength grid for a band |
+| `flux_ujy` | Photon-equivalent bin `fnu` before throughput folding and morphology |
+| `response_flux_ujy` | Response-folded quantity; do not multiply throughput again |
+| `source_electron_rate_pre_morph` | Source electron rate before morphology; use the recorded unit |
+| `flux_elec` | Noiseless expected electrons |
+| `flux_ujy_model` / `flux_ujy_with_noise` | Model/noisy spectra on the nominal response-calibrated scale |
+| `ferr` / `snr` | Spectral uncertainty and pixel S/N |
+| `spec_mask` / `snr_mask` | Validity under their respective definitions |
+| `covariance_lag1` | Adjacent-pixel covariance under the current WCE operator |
+
+Extracted spectra are not automatically aperture-corrected to total-source flux.
+Historical `_0th` arrays are diagnostic proxies on the first-order grid; actual
+zeroth-order passband measurements are in `zero_order`.
+
+`--output-layout legacy` writes schema 2.5. Legacy script execution and `task(...)`
+retain 2.5; modern CLI and `simulate_file(...)` default to 3.0. The unified reader
+supports both. Conversion creates a new file. Subset exports have their own schema.
+
+## 5. Changes from earlier versions
+
+The v0.9.0 refactor preserves the main 1D capabilities while improving maintenance,
+operation and traceability:
+
+- A modular `src/cess` package replaces repeated script-level logic.
+- Explicit configuration/resource loading reduces working-directory coupling.
+- A bounded worker pool, complete waits and failure records replace unbounded spawning.
+- Fixes cover invalid-source parameter reuse, WCE row alignment, empty line results
+  and photometric parameter-table dimensions.
+- Improved response/pixel integration, read noise, negative fluctuations and
+  resampling covariance have explicit definitions.
+- Photometry separates model and observed values; line diagnostics retain false
+  positives, missed peaks and window-measurement semantics.
+- Versioned HDF5, named tables, resource caches, bounded morphology-statistics
+  batches and shared preparation/writing/collection reduce duplication.
+- Component-specific source random streams, hashes and strict resume support reproducibility.
+- Python 3.12 dependency profiles replace the historical Python 3.7 environment.
+
+This is more than a directory rearrangement: bug fixes and numerical-model changes
+can alter v0.8.5 results. Later structural deduplication was checked against frozen references.
+
+## 6. Installation and a first run
+
+With Conda available, install from the downloaded or extracted source root,
+replacing `/path/to/CESS`:
+
+```bash
+conda create -n cess python=3.12 pip
+conda activate cess
+cd /path/to/CESS
+python -m pip install '.[tools,plot]'
+python -m pip check
+python -c 'import sys, cess; print(sys.executable, cess.__version__, cess.__file__)'
+cess --version
+cess --help
 ```
-'GU' # hdf5 group
-├── wave                  # wavelength grid
-├── flux_elec             # simulated CSST observed slitless spectra in electrons
-├── flux_ujy              # simulated CSST intrinsic slitless spectra in ujy
-├── flux_ujy_with_noise   # simulated CSST observed slitless spectra with noise in ujy
-├── ferr                  # simulated CSST observed slitless spectra error in ujy
-├── snr                   # signal-to-noise ratio of each spectrum
-├── snr_mask              # signal-to-noise ratio mask of each spectrum (true for available data points)
-└── spec_mask             # simulated CSST observed slitless spectra mask (true for available data points)
-```
-```
-'GV' and 'GI' # hdf5 group
 
------simulated spectrum information-----
-├── wave
-├── flux_elec
-├── flux_ujy_with_noise
-├── ferr
-├── flux_ujy
-├── snr
-├── snr_mask
-└── spec_mask
+Activate the environment in each new terminal; do not recreate an existing usable
+environment. The [installation guide](docs/INSTALL.md) also covers venv, wheel/sdist
+installation and upgrades. This installs source you obtained and does not assume
+that CESS has been uploaded to PyPI.
 
------intrinsic spectrum emission line information-----
-├── intri_el_id           # ids for source detected with emission lines in intrinsic spectra, i.e., 'flux_ujy'
-├── intri_el_wave         # arrays of the emission line wavelengths in intrinsic spectra
-├── intri_el_idx          # arrays of the emission line wavelength grid corresponding index in intrinsic spectra
-├── intri_el_elnumber     # numbers of detected emission lines in intrinsic spectra
+Core-only installation uses `python -m pip install .`. Core packages are NumPy,
+SciPy, Astropy, h5py, Specutils and tqdm; see [exact requirements](requirements/core-py312.txt).
+pandas supports sampling, Matplotlib supports plotting, and optional GalSim supports
+some historical rendering/library tools. Stored-profile 1D runs do not require GalSim.
 
------noisy spectrum emission line information-----
-├── detect_el_id          # ids for source detected with emission lines in noisy spectra, i.e., 'flux_ujy_with_noise'
-├── detect_el_wave        # arrays of the emission line wavelengths in noisy spectra
-├── detect_el_idx         # arrays of the emission line wavelength grid corresponding index in noisy spectra
-├── detect_el_elnumber    # numbers of detected emission lines in noisy spectra
-└── detect_el_snr         # mean snr of detected emission lines in noisy spectra
+Continue in the activated environment and source root, using fresh destinations:
+
+```bash
+python examples/make_toy_input.py toy.hdf5 --sources 4 --invalid-first
+cess simulate -i toy.hdf5 -o toy_results --manifest toy_results/run.json \
+  --all-effects --seed 1214 -j 1
 ```
 
-----------24/12/30 update----------
-1. Upload the Manual for CESS (version 0.8.5)
-2. Update the demo.ipynb
+The arbitrary toy SEDs and parameters exercise the interface, not science calibration.
+Without an external JSON, packaged defaults are used. Existing products are not
+overwritten: resume the identical task or choose fresh output/manifest paths.
 
-----------24/11/22 update----------
-1. Fix some bugs in the main.py, morphology.py and run.py.
-2. Update the run.py script (named run_gravity_zouhu.py) used in the Gravity for the following emission-line galaxies redshift measurements in Sui et al. (submitted).
-3. Delete version 0.8.4.
+Installed `cess` and `python -m cess` expose the same interface. Relative data paths
+use the current directory. A continuation `\` must be the last character of its
+line; quote paths containing spaces. See the [Bash manual](docs/COMMANDS.md).
 
-----------24/11/04 update----------
-1. Update the emulator version 0.8.5.
-2. Add switch in the running command for performing the following functions or not (default is False for all these four functions):
-   (1).morphlogical effect; (2).wavelength calibration effect; (3).photometric simulation; (4).emission line detection
-   e.g., to perform all the functions as ```python run.py morph=true wave_cal=true photo=true el_detect=true```
-         or do not perform the functions ```python run.py morph=false wave_cal=false photo=false el_detect=false```
-3. Update the main code to solve some extreme spectrum data (start from line 506 in /CESS_v0.8.5/run.py)
+### Optional HDF5 desktop viewer
 
-----------24/06/30 update----------
-1. Update the emulator version 0.8.4.
-2. Add photometric magnitude (AB mag) estimation for CSST photometry.
-3. Update the kernel convolution function following the ```varsmooth``` function in ```pPXF``` package from https://pypi.org/project/ppxf/ by Cappellari
+`cess-viewer` provides read-only structure/attribute inspection, per-source GU/GV/GI spectra,
+general X-Y plots, and figure/CSV export, with English and Chinese interfaces.
+It is separate from simulation and requires a graphical desktop, Matplotlib and working Tcl/Tk.
+From the source root in the activated environment:
 
-----------23/10/27 update----------
+```bash
+python -m pip install '.[viewer]'
+cess-viewer /path/to/product.hdf5 --lang en
+```
 
-1. Update the emulator version 0.8.
-2. For those sources with error data, the emulator creates a nan array now. 
+Omit the file to start an empty window. If Conda lacks Tk, run `conda install tk`
+and check `python -m tkinter`. Headless Gravity batch jobs do not need the viewer.
+See the [HDF5 viewer guide](docs/VIEWER.md).
 
-----------23/08/06 update----------
+## 7. Source layout
 
-1. Divided the files into 3 documents, the basic files used for the emulator, the main Python files of the emulator, and some of the used jupyter notebooks.
-2. Uploaded some jyputer notebooks that I created and used during the development of the emulator.
+```text
+CESS/
+├── src/cess/
+│   ├── cli/            # commands and plotting
+│   ├── config/         # loading and validation
+│   ├── spectra/        # units, integration and spectral operators
+│   ├── instrument/     # background, detector noise and wavelength error
+│   ├── morphology/     # sampling, profiles, MGE and reference calculations
+│   ├── photometry/     # response-weighted measurements
+│   ├── lines/          # detection, matching and window measurements
+│   ├── pipeline/       # standard/paired/line pipelines and collection
+│   ├── io/             # products, selections, atomic writes, manifests and sampling
+│   └── data/           # default configuration and resources
+├── tests/              # numerical, contract, compatibility and workflow checks
+├── requirements/       # Python 3.12 dependency profiles
+├── examples/           # public interface examples
+├── scripts/gravity/    # preflight and PBS payload
+├── docs/               # installation, operation, formats and models
+└── CESS_v0.8.6/        # selected compatibility entry points and required resources
+```
 
-----------23/07/19 update----------
+The [release contents](docs/RELEASE_CONTENTS_v0.9.0.md) define the distribution.
+Real catalogues, outputs, historical research and development archives are not
+release files merely because they are present in a workspace.
 
-Main files for emulator version 0.7 are uploaded！
-1. main.py for the convolution for the CSST intrinsic slitless spectra, simulating observed slitless spectra and emission line detection.
-2. morphology.py for the 2-D parameters fitting and 2-D profile distribution function extraction.
-3. utils.py for some small functions.
-4. runtest.py for the running code file in the local environment, i.e., my MacBook.
-5. More details needed to be updated.
+## 8. Batch runs and parallelism
 
-----------23/03/25 update----------
+Without `--chunk-size`, each input file is one task and one output HDF5.
+`-j` / `--workers` sets the process limit, default 1. An unchunked single input
+remains one task even when more workers are requested.
 
-redshift range figure updated: 
-1. using redshift data in the loop instead of creating and loading files.
-2. setting z = 0.5 x_label as a float while other labels are int using FuncFormatter
-3. hide the y-axis major label instead of setting the color as 'white'
+On a host with memory for two complete input tasks, run from any directory:
 
-----------21/12/02 update----------
+```bash
+cess simulate -i /path/to/catalogues -o /path/to/new_results --all-effects -j 2
+```
 
-redshift range figure updated with customized x-axis scale.
+Workers take the next file after finishing. The run reports input/task counts,
+requested/planned worker limits and threads. Start/finish records include PIDs
+and elapsed time; sequential execution is made explicit.
 
-----------21/08/25 update----------
+For a large single file, use chunks and then merge. In the directory containing `input.hdf5`:
 
-Jupyter notebook of emission lines redshift range in 3 CSST grism band.
+```bash
+cess simulate -i input.hdf5 -o chunks --all-effects --chunk-size 100 -j 2
+cess merge -i chunks -o merged/complete.hdf5 --input-source input.hdf5 --dry-run
+cess merge -i chunks -o merged/complete.hdf5 --input-source input.hdf5
+```
+
+All rows are processed; `100` limits rows per task, not the total sample. Merging
+writes real, self-contained datasets in original row order without recalculating
+spectra. `--input-source` verifies full coverage, IDs and SHA. Keep the destination
+outside the chunk directory and merge different catalogues separately.
+
+The default `--threads-per-worker 1` requests native-library thread limits before
+spawn imports numerical libraries, restoring the parent's environment after the
+pool closes. It is not CPU affinity or a strict process-tree CPU cap. Workers are
+bounded by the request, task count and optional `--memory-budget-gib`, which uses
+conservative estimates rather than real-time RSS or an OS hard limit. Simultaneous
+large tasks add their memory use: inspect a small run and `--dry-run` first.
+
+On Gravity, scheduler allocation and CESS worker settings are separate. Scripts
+fix native thread requests to 1 and check the declared worker/CPU relationship.
+Directory input is supported; an unset `CESS_CHUNK_SIZE` keeps whole-file tasks.
+See [Gravity instructions](scripts/gravity/README.md). The runner operates on one
+host and does not distribute work across nodes with MPI.
+
+## 9. Scientific limits and future work
+
+- The nominal R=300 of identified existing input libraries is known, but their
+  detailed template LSF is not certified; the default remains `unknown`.
+- Upstream Gaussian FWHM uses `*_dlambda`; `*_Res` does not enter that operator.
+  Changing `*_Res` alone or treating FWHM as pixel spacing does not reconfigure resolution.
+- The default sky is a fixed template. `background_v_mag` is a provenance label
+  in that mode, not a standalone rescaling control or a time/solar-geometry zodiacal model.
+- Source morphology, aperture, PSF and template/instrument LSF need consistent
+  definitions. MGE/strip assumes separable SED/spatial structure, achromatic
+  morphology and the specified PSF form.
+- The fast 1D path excludes full-field spectral contamination, CCD-edge projection
+  and extraction from a realistic 2D scene.
+
+Engineering checks do not replace instrument or scientific selection-function calibration.
+Future **CESS+** work includes single-source zeroth/first-order images, catalogue/WCS
+CCD scenes, contaminated-spectrum extraction and kinematic recovery studies.
+These are not completed v0.9.0 capabilities; historical prototypes require separate
+adaptation and validation. See the [roadmap](docs/ROADMAP.md).
+
+## 10. Documentation and licensing
+
+- [Quick start](docs/QUICKSTART.md)
+- [Bash command manual](docs/COMMANDS.md)
+- [User guide](docs/USER_GUIDE.md)
+- [Installation and environments](docs/INSTALL.md)
+- [Output layout and reader](docs/OUTPUT_LAYOUT.md)
+- [HDF5 desktop viewer](docs/VIEWER.md)
+- [Scientific models and limits](docs/SCIENCE_MODELS.md)
+- [Morphology/MGE](docs/MGE_MODELS.md) and [bundle format](docs/MGE_BUNDLE_FORMAT.md)
+- [Gravity/PBS](scripts/gravity/README.md)
+- [Changes](CHANGELOG.md), [release notes](docs/RELEASE_NOTES_v0.9.0.md) and [release contents](docs/RELEASE_CONTENTS_v0.9.0.md)
+- [MIT license](LICENSE) and [resource notice](RESOURCE_NOTICE.md)
+- [简体中文首页](README_zh-CN.md)
+
+Repository: [RainW7/CESS](https://github.com/RainW7/CESS). Check the version and exact
+artifact: local source may precede the remote repository. CESS-owned code and
+documentation use MIT. The maintainer approved distribution of the supplied
+throughput, background and morphology resources; their scope and known provenance
+are recorded separately. External software/data retain their rights. Actual online
+dates and downloads are defined by the GitHub release, not local artifact preparation.

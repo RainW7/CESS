@@ -1,0 +1,77 @@
+{
+  "collection_dev6": {
+    "redistribution_note": {
+      "operation": "Replace personal absolute interpreter shebangs with /usr/bin/env python3 for redistribution; executable AST unchanged.",
+      "original_snapshot_members": {
+        "src/cess/pipeline/paired.py": "499af4d53cb003c390ee2addb3369e2f1ef6873dac2b89c0bc41e8deaed344eb",
+        "src/cess/pipeline/standard.py": "9a0f04cb116b0179f76a0d49f257e0bbdd90f8cdaa04821c259ea90e5d77951b"
+      },
+      "original_snapshot_sha256": "faacace1242bcdef0ce0be9c44ec85d7265e96075dc92c3b33ac7f97ef04aa9e",
+      "original_source_archive_identity_preserved": true,
+      "recorded_on": "2026-10-26"
+    },
+    "snapshot": "collection_dev6.tar.gz",
+    "snapshot_members": {
+      "src/cess/pipeline/paired.py": "84e36d79ed5abb95a05b150194c10414994e30c31f7f5944b1780c5f1f4158ad",
+      "src/cess/pipeline/standard.py": "5a4b4ef2038d0008e8d9b48ce6a50163c9cb71da88f17a155f30aec42e5381a8"
+    },
+    "snapshot_sha256": "b6c38ac10a62cb46ec4d8fcabf6e9cad187638a38e0d9ea485967387afc511c0",
+    "source_archive": "docs/refactor_collection_20261024/baseline_dev6_package.tar.gz",
+    "source_archive_members": 105,
+    "source_archive_sha256": "8b6a244d73eae63b15e44ea0a5fb34a161689c3fa8b8c13f80fc0d243f1303e0"
+  },
+  "profile_statistics_r3": {
+    "snapshot": "profile_statistics_r3.tar.gz",
+    "snapshot_members": {
+      "src/cess/morphology/libraries.py": "f2e9102b0cda052bfaa78716159cabe73dbf0755dd0cf2f811a7b66905373ef5"
+    },
+    "snapshot_sha256": "ad354eb59b56dbb2bb0360ceb7b131178e02a4d12c75ae8b2870e09e688f20d6",
+    "source_archive": "docs/refactor_v090_r4/baseline_sources.tar.gz",
+    "source_archive_members": 209,
+    "source_archive_sha256": "b93953b7720265359f8348cd84ef3d112662596a3b2ce52984a235e89127640d"
+  },
+  "results_dev4": {
+    "redistribution_note": {
+      "operation": "Replace personal absolute interpreter shebangs with /usr/bin/env python3 for redistribution; executable AST unchanged.",
+      "original_snapshot_members": {
+        "src/cess/io/legacy_writer.py": "8b6788d234071eee01573b109ef7ceaa805104680b84b703b1a9ec745207f526",
+        "src/cess/pipeline/paired.py": "11929afc552783a625f1d36a23f13cbddd95ebbfbccb00b55ca00b21860c4979",
+        "src/cess/pipeline/standard.py": "4856f19f1af52c1a7936f4c9b4431548f2cd89001275572920438f5dde0f3a19"
+      },
+      "original_snapshot_sha256": "cf6ae5dd5989f0dae72e920fa23d4ec3237e30f704f283acb04476ff82f4efa1",
+      "original_source_archive_identity_preserved": true,
+      "recorded_on": "2026-10-26"
+    },
+    "snapshot": "results_dev4.tar.gz",
+    "snapshot_members": {
+      "src/cess/io/legacy_writer.py": "8b6788d234071eee01573b109ef7ceaa805104680b84b703b1a9ec745207f526",
+      "src/cess/pipeline/paired.py": "d1954915fcfb0cd10da2d5c633ea8a00fadebffe53c7c40bbf2f7e17da60afb3",
+      "src/cess/pipeline/standard.py": "21eeb84f88f290a45d673d458fe2036e5ae25e93542c878b94c678dc5c9795c4"
+    },
+    "snapshot_sha256": "00f41dd34c41b0075272d0e0f781bc031f753e49bf737d10944db34711c0342c",
+    "source_archive": "docs/migration_py312_20261023/checkpoint_20261023_162449.tar.gz",
+    "source_archive_members": 307,
+    "source_archive_sha256": "d5c892fc5db04f451e41726c0cda04300919fbd55dc1c6edeaade357217deac2"
+  },
+  "writer_dev5": {
+    "redistribution_note": {
+      "operation": "Replace personal absolute interpreter shebangs with /usr/bin/env python3 for redistribution; executable AST unchanged.",
+      "original_snapshot_members": {
+        "src/cess/pipeline/paired.py": "6a63ffb57493470e912347d8d24812f3d78be8d54796f5c8aa71d218b5ef9b23",
+        "src/cess/pipeline/standard.py": "a225fac79f88f5e952dd196897b980707e2d1a7ac6b6f9f24df255bb765d454f"
+      },
+      "original_snapshot_sha256": "cb75e4be1cb293ec99ab4451f82c2cd138961602ef8a35039314765516c483a9",
+      "original_source_archive_identity_preserved": true,
+      "recorded_on": "2026-10-26"
+    },
+    "snapshot": "writer_dev5.tar.gz",
+    "snapshot_members": {
+      "src/cess/pipeline/paired.py": "6ce0a8fa4e4caa7827ed2fef1ffbd3f123325a185162c480ebc22ab00c1025a6",
+      "src/cess/pipeline/standard.py": "94d6dcdd8e1e76ca87cdf5593d89f172a878fd598c2bbecd25484542609635b0"
+    },
+    "snapshot_sha256": "256c75359166cb1fc6462895a4beb7e51365fec3e6a71aa8ad85388539914f1a",
+    "source_archive": "docs/refactor_results_20261023/checkpoint_20261023_173457.tar.gz",
+    "source_archive_members": 304,
+    "source_archive_sha256": "b39d57c589c21237e16e2a5ceda98dd74d6b5470b59ec53a5f199b4ae4ba330a"
+  }
+}

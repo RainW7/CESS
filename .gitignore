@@ -1,0 +1,46 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.agent/
+.agents/
+.codex/
+.aws/
+.envs/
+
+# Local catalogues/products are separate from the source release.
+/CESS_v0.8.6/CESS_input/
+/CESS_v0.8.6/CESS_output/
+/CESS_input/
+/CESS_output/
+/local_runs/
+/*.hdf5
+/*.h5
+
+# Local build products and installed metadata.
+/build/
+/dist/
+/src/*.egg-info/
+
+# Development evidence and local checkpoints are not part of the public source.
+# Small, required numerical-oracle fixtures live under tests/baselines/ instead.
+/docs/pre_release_*/
+/docs/documentation_review_*/
+/docs/documentation_cpu_*/
+/docs/refactor_*/checkpoint_*.tar.gz
+/docs/migration_*/checkpoint_*.tar.gz
+/docs/refactor_*/baseline_*.tar.gz
+/docs/refactor_*/cess-*.whl
+/docs/migration_*/*.whl
+
+# Repair checkpoints stay available locally, outside the publishable source set.
+/docs/repair_*/baseline_sources.tar.gz
+/docs/repair_*/checkpoint_*.tar.gz
+/docs/repair_*/checkpoint_manifest*.json
+/docs/repair_*/git_status_checkpoint.txt
+/docs/repair_*/changes_from_baseline.patch
+/docs/repair_*/CESS-*-source-candidate.tar.gz
+
+/docs/input_quality_20261024/
+
+/docs/cli_usability_20261024/

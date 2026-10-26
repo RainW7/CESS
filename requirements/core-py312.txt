@@ -1,0 +1,8 @@
+# Python 3.12 direct runtime pins, matching setup.cfg.
+# Platform-neutral input constraints; transitive dependencies are not locked.
+astropy==8.0.2
+h5py==3.16.0
+numpy==2.5.4
+scipy==1.18.1
+specutils==2.4.0
+tqdm==4.70.1

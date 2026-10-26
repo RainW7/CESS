@@ -1,0 +1,83 @@
+{
+  "schema": "cess.resource-inventory.v1",
+  "recorded_on": "2026-10-24",
+  "relative_to": "src/cess/data",
+  "maintainer_distribution_confirmed": true,
+  "confirmation_scope": "Current CSST throughput, background and morphology resources, including GEMS catalogue and generated profiles, accompany the release.",
+  "upstream_version_status": "Maintainer reports latest throughput; unified upstream release/date not identified in local records.",
+  "license_scope": "Project source/documents MIT; external data and dependencies retain their original rights. No third-party relicense is inferred.",
+  "files": {
+    "basic_file/gems_cat.fits": {
+      "bytes": 5696640,
+      "sha256": "179ba4194f43796a31ffddfb76f477c945a08dea33b0880af061ebbf18e21629"
+    },
+    "basic_file/heightlib_20x20x10x10.pkl": {
+      "bytes": 30046811,
+      "sha256": "00694b50667a0cf9864ec8dab3df52591f32f142e7c99367effed7d0547b4d88"
+    },
+    "basic_file/updated_bkg.fits": {
+      "bytes": 14400,
+      "sha256": "c6e2c8d2e3b8bb825673e4abc01def0540639da0a0f4aaf8ba6879c07cd519b1"
+    },
+    "basic_file/widthlib_20x20x10x10.pkl": {
+      "bytes": 28433375,
+      "sha256": "2633adf7fca1b95881578fa33fc111b8ecdcac65ebedf86a293462dd45549372"
+    },
+    "csst_phot_tp/csst_phot.g.fits": {
+      "bytes": 8640,
+      "sha256": "de86802a4d514a3cd5385de8e357b0b842d96e2337f2640ab7f56ba582528cab"
+    },
+    "csst_phot_tp/csst_phot.i.fits": {
+      "bytes": 8640,
+      "sha256": "9116be53bf6a0bc7a03b132938432921b6dd1d6624c4de125e6d3bbc59f9f29b"
+    },
+    "csst_phot_tp/csst_phot.nuv.fits": {
+      "bytes": 8640,
+      "sha256": "56c0afb552b7b5ab1774ff6ca27522f5ee2677c36bf1732940a82f6a6ede0f58"
+    },
+    "csst_phot_tp/csst_phot.r.fits": {
+      "bytes": 8640,
+      "sha256": "ae4d3fc2c742078189c352ef41335dfb3c5a1e89bbd83f698215187e3502b85f"
+    },
+    "csst_phot_tp/csst_phot.u.fits": {
+      "bytes": 8640,
+      "sha256": "8da42c0c2e1fecaa4515086d4323b150c5f1346af3f36a24a44469a32aa08c00"
+    },
+    "csst_phot_tp/csst_phot.y.fits": {
+      "bytes": 8640,
+      "sha256": "017f117e6b87b220577d5eefd0f6643db15d7e027e84f71244c7de090d46eee2"
+    },
+    "csst_phot_tp/csst_phot.z.fits": {
+      "bytes": 8640,
+      "sha256": "0a11246d5a48039b14969044628b1d1f93f34d60f5ad285fe4a89170c31a2488"
+    },
+    "csst_sls_tp/GI_throughput_0th.fits": {
+      "bytes": 14400,
+      "sha256": "e435de7213cdf572de761e5b8dc96ecedc9656393b7455a2b055424beeffed6b"
+    },
+    "csst_sls_tp/GI_throughput_1st.fits": {
+      "bytes": 14400,
+      "sha256": "a32c957d40c00fd3c42e86c79b1c0a909e9cfb529985533e53306e5289afe9e4"
+    },
+    "csst_sls_tp/GU_throughput_0th.fits": {
+      "bytes": 14400,
+      "sha256": "a2accbe71bab1cf5a1e23a5aef65c2ce99af4ba04368153b339e7e982910bcfa"
+    },
+    "csst_sls_tp/GU_throughput_1st.fits": {
+      "bytes": 14400,
+      "sha256": "61142bfa59b32eaeab9976acab1d45fc05d6720e645930f9a8a272df305f27da"
+    },
+    "csst_sls_tp/GV_throughput_0th_no56.fits": {
+      "bytes": 14400,
+      "sha256": "35f0c6c3fd39ddf727a97537112650fe2b8ced1a7f437d60b82506a9a488fa46"
+    },
+    "csst_sls_tp/GV_throughput_1st_no1567.fits": {
+      "bytes": 14400,
+      "sha256": "ca4802682d8d514f44c9580ff72bfa76f800d7b7f8c668eb4e7b94d35efdeb73"
+    },
+    "emulator_parameters.json": {
+      "bytes": 3693,
+      "sha256": "524e3d98d1e3779a72456ccbb11a662078941ddb600151820fa90f341dae4a34"
+    }
+  }
+}

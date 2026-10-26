@@ -1,0 +1,69 @@
+# Publish the runtime and its reproducible test closure, not local checkpoints.
+prune .git
+prune .envs
+prune build
+prune dist
+prune docs
+prune CESS_v0.8.5
+prune CESS_kinematics
+prune jupyter_notebooks
+
+include pyproject.toml setup.cfg MANIFEST.in
+include .gitignore .gitattributes
+include README.md README_zh-CN.md CHANGELOG.md CHANGELOG_zh-CN.md
+include LICENSE RESOURCE_NOTICE.md RESOURCE_NOTICE_zh-CN.md
+recursive-include src/cess *.py
+include src/cess/data/emulator_parameters.json
+recursive-include src/cess/data/basic_file *.fits *.pkl
+recursive-include src/cess/data/csst_sls_tp *.fits
+recursive-include src/cess/data/csst_phot_tp *.fits
+recursive-include requirements *.txt
+recursive-include tests *.py
+recursive-include tests/baselines *.tar.gz *.json
+include examples/README.md examples/README_zh-CN.md examples/make_toy_input.py
+include cess_h5_viewer.py
+include scripts/gravity/README.md scripts/gravity/README_zh-CN.md
+include scripts/gravity/preflight.sh scripts/gravity/cess.pbs
+include docs/QUICKSTART.md docs/QUICKSTART_zh-CN.md
+include docs/USER_GUIDE.md docs/USER_GUIDE_zh-CN.md
+include docs/INSTALL.md docs/INSTALL_zh-CN.md
+include docs/OUTPUT_LAYOUT.md docs/OUTPUT_LAYOUT_zh-CN.md
+include docs/VIEWER.md docs/VIEWER_zh-CN.md
+include docs/COMMANDS.md docs/COMMANDS_zh-CN.md
+include docs/SCIENCE_MODELS.md docs/SCIENCE_MODELS_zh-CN.md
+include docs/MGE_MODELS.md docs/MGE_MODELS_zh-CN.md docs/MGE_BUNDLE_FORMAT.md
+include docs/RELEASE_CONTENTS_v0.9.0.md docs/RELEASE_CONTENTS_v0.9.0_zh-CN.md
+include docs/RELEASE_NOTES_v0.9.0.md docs/RELEASE_NOTES_v0.9.0_zh-CN.md
+include docs/RESOURCE_MANIFEST.json docs/ROADMAP.md docs/ROADMAP_zh-CN.md
+include docs/RELEASE_CHECKLIST_v0.9.0.md docs/RELEASE_CHECKLIST_v0.9.0_zh-CN.md
+include docs/migration_py312_20261023/requirements-macos-arm64-py312.lock
+
+# Old source entry points still used by the compatibility tests.
+include CESS_v0.8.6/cess_*.py
+include CESS_v0.8.6/demo.py CESS_v0.8.6/main.py CESS_v0.8.6/morphology.py
+include CESS_v0.8.6/run.py CESS_v0.8.6/run_gravity_zouhu.py
+include CESS_v0.8.6/runner_support.py CESS_v0.8.6/utils.py
+include CESS_v0.8.6/basic_file/create_lib.py
+include CESS_v0.8.6/emulator_parameters.json
+include run_el_detect.py run_gravity_zouhu_fix.py extract_mock_spectra_ds.py
+
+# The 17 legacy resource copies are checked against the packaged defaults.
+include CESS_v0.8.6/basic_file/updated_bkg.fits
+include CESS_v0.8.6/basic_file/gems_cat.fits
+include CESS_v0.8.6/basic_file/widthlib_20x20x10x10.pkl
+include CESS_v0.8.6/basic_file/heightlib_20x20x10x10.pkl
+include CESS_v0.8.6/csst_sls_tp/GU_throughput_1st.fits
+include CESS_v0.8.6/csst_sls_tp/GV_throughput_1st_no1567.fits
+include CESS_v0.8.6/csst_sls_tp/GI_throughput_1st.fits
+include CESS_v0.8.6/csst_sls_tp/GU_throughput_0th.fits
+include CESS_v0.8.6/csst_sls_tp/GV_throughput_0th_no56.fits
+include CESS_v0.8.6/csst_sls_tp/GI_throughput_0th.fits
+include CESS_v0.8.6/csst_phot_tp/csst_phot.nuv.fits
+include CESS_v0.8.6/csst_phot_tp/csst_phot.u.fits
+include CESS_v0.8.6/csst_phot_tp/csst_phot.g.fits
+include CESS_v0.8.6/csst_phot_tp/csst_phot.r.fits
+include CESS_v0.8.6/csst_phot_tp/csst_phot.i.fits
+include CESS_v0.8.6/csst_phot_tp/csst_phot.z.fits
+include CESS_v0.8.6/csst_phot_tp/csst_phot.y.fits
+
+global-exclude *.h5 *.hdf5 *.py[cod] .DS_Store

@@ -1,0 +1,3 @@
+# Optional demo/diagnostic plotting.
+-r core-py312.txt
+matplotlib==3.11.2

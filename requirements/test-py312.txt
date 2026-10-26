@@ -1,0 +1,5 @@
+# Reproduce the non-render test tool selection; no platform/transitive lock.
+-r tools-py312.txt
+-r plot-py312.txt
+-r build-py312.txt
+pytest==9.1.1
