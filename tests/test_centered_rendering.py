@@ -1,15 +1,12 @@
 """Explicit odd-stamp centering; the default renderer remains the legacy recipe."""
 from pathlib import Path
 import sys
-
 import numpy as np
 import pytest
 from scipy.special import ndtr
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'CESS_v0.8.6'))
-import morphology
-
-
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
+import cess.morphology.empirical as morphology
 @pytest.fixture(autouse=True)
 def configured():
     morphology.configure()

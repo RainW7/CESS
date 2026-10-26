@@ -4,11 +4,9 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
 from cess.cli import demo
@@ -156,14 +154,15 @@ def test_empty_export_has_two_dimensional_spectra(tmp_path):
 
 def test_import_and_passthrough_sampling_do_not_require_pandas(tmp_path):
     code = r'''
-import builtins, sys
+import builtins
+import sys
 real = builtins.__import__
 def blocked(name, *args, **kwargs):
     if name == 'pandas' or name.startswith('pandas.'): raise AssertionError('eager pandas import')
     return real(name, *args, **kwargs)
 builtins.__import__ = blocked
 from cess.io import sampling
-import extract_mock_spectra_ds as legacy
+import cess.io.sampling as legacy
 assert legacy is sampling
 assert sampling.stratified_sampling([{'id':1,'z_best':.2}],target=2)[0]['id']==1
 assert 'pandas' not in sys.modules

@@ -2,21 +2,19 @@
 import importlib
 from pathlib import Path
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
 from test_pipeline_smoke import make_input
 
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 sys.path.insert(0, str(CORE))
-from cess_config import load_config
-from cess_cli import build_jobs
-from cess_manifest import snapshot, verify_product
+from cess.config.loader import load_config
+from cess.cli.main import build_jobs
+from cess.io.manifest import snapshot, verify_product
 
 
-@pytest.mark.parametrize('driver_name,mode', [('run', 'standard'), ('run_gravity_zouhu', 'paired-wce')])
+@pytest.mark.parametrize('driver_name,mode', [('cess.pipeline.standard', 'standard'), ('cess.pipeline.paired', 'paired-wce')])
 def test_utf8_id_round_trip_and_resume(tmp_path, driver_name, mode):
     source = tmp_path / 'unicode.hdf5'
     make_input(source, count=1)

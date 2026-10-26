@@ -5,15 +5,13 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
-
 import numpy as np
 import pytest
-
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 if str(CORE) not in sys.path:
     sys.path.insert(0, str(CORE))
 
-from cess_profiles import describe_profile_libraries
+from cess.morphology.libraries import describe_profile_libraries
 
 
 @pytest.fixture

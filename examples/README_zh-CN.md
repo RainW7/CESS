@@ -1,79 +1,47 @@
-# CESS v0.9.0 一维接口示例
+# 光谱示例
 
-[English](README.md) | [简体中文](README_zh-CN.md)
-`make_toy_input.py` 生成一份可公开的微型 BayeSED-shaped HDF5。
-连续谱、线形和星系参数均为任意设定，仅用于安装与接口演示，不用于科学定标。
-实际研究仍使用满足[输入契约](../docs/USER_GUIDE_zh-CN.md)的星系模板。
+[English](README.md) | 简体中文
 
-## 1. 准备环境和工作目录
+| 文件 | 内容 |
+| --- | --- |
+| [toy_input.hdf5](toy_input.hdf5) | 4 个符合 BayeSED 输入结构的合成星系光谱 |
+| [toy_output.hdf5](toy_output.hdf5) | 对应的 GU/GV/GI 模拟光谱、测光与发射线测量，HDF5 schema 3.0 |
+| [make_toy_input.py](make_toy_input.py) | 生成另一份小型输入文件的脚本 |
 
-先按[安装指南](../docs/INSTALL_zh-CN.md)安装 CESS，并激活选定的 Python3.12 环境。
-选择一个新的可写工作目录并进入它。以下 `toy.hdf5`、`results`、`run.json`、`lines` 和图像
-都相对此工作目录；`/path/to/CESS` 须替换为自己的源码位置。
+这些 SED 和星系参数是任意构造的接口示例，不代表经过定标的真实星系样本。第 0 行故意设置为无效 SED，输出保留其 ID 与行号并标记 `data_mask=2`；第 1–3 行包含模拟光谱。
 
-```bash
-python -c 'import sys, cess; print(sys.executable, cess.__version__, cess.__file__)'
-python /path/to/CESS/examples/make_toy_input.py toy.hdf5 --sources 4 --invalid-first
-```
+## 打开随附文件
 
-## 2. 模拟完整文件
+按[安装指南](../docs/INSTALL_zh-CN.md)安装 CESS 后，在仓库根目录运行：
 
 ```bash
-cess simulate -i toy.hdf5 -o results --all-effects --seed 1214 --manifest run.json
+cess-viewer examples/toy_output.hdf5 --lang zh
 ```
 
-默认1个worker；四个源写入同一份 `results/CSST_grism_toy_4.hdf5`。
-源0被故意设置为无效SED，应保留ID与行号并标记 `data_mask=2`；其模拟结果为无效值，
-其他三个源正常处理。`--all-effects` 同时启用四个科学开关；不加它时这些开关默认关闭。
-
-不指定JSON时使用包内默认仪器资源。现代入口默认输出schema3.0；
-需要旧布局时另选新的输出目录和manifest，并增加 `--output-layout legacy`。
-已有输入、产品和manifest不会被静默覆盖。再次练习时换一个新工作目录或使用下述续跑方式。
-
-## 3. 读取与绘图
-
-在同一工作目录、已安装CESS的Python环境或Notebook中执行：
-
-```python
-from cess.io.products import open_product, read_product_summary
-
-print(read_product_summary('results/CSST_grism_toy_4.hdf5'))
-with open_product('results/CSST_grism_toy_4.hdf5') as product:
-    print(product.catalog['ID'][:])
-    print(product.catalog['data_mask'][:])
-    print(product.catalog['input_row_indices'][:])
-    wave = product.band('GV')['wave'][:]                 # Angstrom
-    flux = product.band('GV')['flux_ujy_with_noise'][1]   # microJy
-```
-
-绘制有效的第1行光谱；需要 `plot` 可选依赖：
+选择源行号 **1** 查看有效光谱。也可以打开输入文件：
 
 ```bash
-python -m cess.cli.demo results/CSST_grism_toy_4.hdf5 1 emissionline --save spectrum.png
+cess-viewer examples/toy_input.hdf5 --lang zh
 ```
 
-## 4. 发射线后处理
+浏览器需要 `viewer` 可选依赖与可用的 Tcl/Tk，详见[浏览器指南](../docs/VIEWER_zh-CN.md)。
+
+## 重新计算
+
+使用随附输入，并选择一个新的输出目录：
 
 ```bash
-cess el-detect -i results/CSST_grism_toy_4.hdf5 -o lines --manifest lines.json --seed 1214
+cess simulate -i examples/toy_input.hdf5 -o toy_results_new --all-effects --seed 1214
 ```
 
-该步骤读取既有模拟产品并写出独立线测量产品，不重新生成含噪光谱。
-EL-only文件不复制父产品的全部光谱大数组；保留父模拟文件以供后续读取和解释来源。
+结果为 `toy_results_new/CSST_grism_toy_input_4.hdf5`，全部 4 行保存在同一文件中。示例使用 standard 模式、随包默认配置及全部 4 个可选效应。已有输出不会被覆盖；重新运行时应另选目录。
 
-## 5. 清单与续跑
+随附输出中的来源路径已改为仓库相对路径，方便公开分发；科学数组、掩膜、ID 和种子保持生成时的数值。重新计算会记录你所用环境的 provenance；随附文件不用于续跑旧任务。
 
-确认旧worker已经停止，保留首次运行的参数后，可先只读预检再续跑：
+也可以自己生成另一份小型输入：
 
 ```bash
-cess simulate -i toy.hdf5 -o results --all-effects --seed 1214 --manifest run.json --resume --dry-run
-cess simulate -i toy.hdf5 -o results --all-effects --seed 1214 --manifest run.json --resume
+python examples/make_toy_input.py toy_input_new.hdf5 --sources 4 --invalid-first
 ```
 
-已经完成且核验通过的任务会保留；缺失产品才会重新计算。输入、配置、源区间、chunk、
-输出布局、科学开关、种子或源码/资源身份改变时，不应沿用原清单。
-新任务的 `--dry-run` 不附加manifest；同时使用新 `--dry-run --manifest` 会创建清单。
-
-未安装包、直接运行源码时，将命令中的 `cess` 替换为
-`env PYTHONPATH=/path/to/CESS/src python -s -B -m cess`，解释器仍须已安装所需依赖。
-正式星表批处理、并行、分片合并、日志和常见错误见[Bash 命令指南](../docs/COMMANDS_zh-CN.md)。
+输入文件的内容身份改变后，即使种子相同，随机流也可能改变。

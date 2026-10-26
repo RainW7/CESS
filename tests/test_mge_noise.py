@@ -1,11 +1,9 @@
 """Conditional finite dispersion windows must not restore lost source light."""
 from pathlib import Path
 import sys
-
 import numpy as np
 import pytest
-
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'CESS_v0.8.6'))
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
 from test_extraction_noise import simulator,arguments
 
 

@@ -5,15 +5,13 @@ import json
 from pathlib import Path
 import subprocess
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
-CORE=Path(__file__).resolve().parents[1]/'CESS_v0.8.6'
+CORE=Path(__file__).resolve().parents[1]/'src'
 sys.path.insert(0,str(CORE))
-import cess_mge_bundle as verifier
-from cess_profile_bundle import verify_profile_bundle
+import cess.morphology.bundle as verifier
+from cess.morphology.profile_bundle import verify_profile_bundle
 
 
 def refresh(directory, manifest=None):
@@ -162,12 +160,12 @@ def test_c7_rejects_new_schema_and_new_verifier_import_cli_are_safe(bundle,tmp_p
     code="""import sys,h5py
 sys.path.insert(0,sys.argv[1])
 h5py.File=lambda *a,**k:(_ for _ in ()).throw(AssertionError('import performed HDF I/O'))
-import cess_mge_bundle
-assert not any(n in sys.modules for n in ['cess_mge','cess_config','morphology'])
+import cess.morphology.bundle as cess_mge_bundle
+assert not any(n in sys.modules for n in ['cess.morphology.mge','cess.config.loader','morphology'])
 """
     result=subprocess.run([sys.executable,'-B','-c',code,str(CORE)],cwd=str(tmp_path),stdout=subprocess.PIPE,stderr=subprocess.PIPE,universal_newlines=True)
     assert result.returncode==0,result.stderr
-    cli=subprocess.run([sys.executable,'-B',str(CORE/'cess_mge_bundle.py'),str(bundle)],cwd=str(tmp_path),stdout=subprocess.PIPE,stderr=subprocess.PIPE,universal_newlines=True)
+    cli=subprocess.run([sys.executable,'-B',str(CORE/'cess/morphology/bundle.py'),str(bundle)],cwd=str(tmp_path),stdout=subprocess.PIPE,stderr=subprocess.PIPE,universal_newlines=True)
     assert cli.returncode==0,cli.stderr
     assert json.loads(cli.stdout)['verified'] is True
 

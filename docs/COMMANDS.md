@@ -3,7 +3,6 @@
 [English](COMMANDS.md) | [简体中文](COMMANDS_zh-CN.md)
 
 This guide is for users who are new to the CESS command line. It covers Bash on macOS and Linux; the common single-line commands also work in zsh.
-For release scope and GitHub publication status, see the [release checklist](RELEASE_CHECKLIST_v0.9.0.md).
 Scientific quantities, input HDF5 fields, and model assumptions are described in the [user guide](USER_GUIDE.md). This page explains how to compose and run commands.
 
 ## 1. The three most common ways to run CESS

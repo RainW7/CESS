@@ -3,14 +3,12 @@ import json
 from pathlib import Path
 import pickle
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'))
-from cess_config import load_config
-from runner_support import (cached_pickle, profile_library_provenance,
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+from cess.config.loader import load_config
+from cess.pipeline.support import (cached_pickle, profile_library_provenance,
     resolve_spectral_extraction, write_spectral_extraction,
     record_runner_provenance, atomic_hdf5)
 

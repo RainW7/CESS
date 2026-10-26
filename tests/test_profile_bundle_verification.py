@@ -7,21 +7,19 @@ from pathlib import Path
 import pickle
 import subprocess
 import sys
-
 import pytest
-
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 if str(CORE) not in sys.path:
     sys.path.insert(0, str(CORE))
 
-from cess_profile_bundle import VERIFICATION_SCOPE, verify_profile_bundle
-import cess_profile_bundle as bundle_module
-from cess_profile_generator import plan_generation
+from cess.morphology.profile_bundle import VERIFICATION_SCOPE, verify_profile_bundle
+import cess.morphology.profile_bundle as bundle_module
+from cess.morphology.profile_generator import plan_generation
 
 
 @pytest.fixture
 def bundle(tmp_path):
-    plan = plan_generation(CORE / 'emulator_parameters.json',
+    plan = plan_generation(CORE / 'cess/data/emulator_parameters.json',
         {'n': [1.], 're_pixel': [4.], 'pa_deg': [0., 45.], 'axis_ratio': [1.]})
     path = tmp_path / 'bundle'
     path.mkdir()
@@ -213,7 +211,7 @@ def test_duplicate_keys_and_nonfinite_json_are_rejected(bundle):
 
 def test_cli_success_failure_and_help_do_not_generate(bundle, tmp_path):
     path, _ = bundle
-    command = [sys.executable, '-B', str(CORE / 'cess_profile_bundle.py')]
+    command = [sys.executable, '-B', str(CORE / 'cess/morphology/profile_bundle.py')]
     success = subprocess.run(command + [str(path)], cwd=str(tmp_path),
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     assert success.returncode == 0, success.stderr

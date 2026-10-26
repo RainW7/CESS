@@ -4,15 +4,14 @@ import math
 from pathlib import Path
 import sys
 import warnings
-
 import numpy as np
 import pytest
 from scipy.integrate import quad
 from scipy.special import gammaincinv,k1,ndtr
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'CESS_v0.8.6'))
-import cess_mge as mge
-from cess_oracle import sersic_bin_oracle
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
+import cess.morphology.mge as mge
+from cess.morphology.oracle import sersic_bin_oracle
 
 
 def call(n=1.,re=4.,pa=30.,q=.6,psf=.2625,pixel=.074,x=None,y=None,**kwargs):

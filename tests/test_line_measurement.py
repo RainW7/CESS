@@ -2,12 +2,10 @@
 import json
 from pathlib import Path
 import sys
-
 import numpy as np
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'))
-from cess_lines import measure_line_window
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+from cess.lines.measurement import measure_line_window
 
 
 def dense_reference(wave, flux, error, center, width, side_width, gap=0, lag=None):

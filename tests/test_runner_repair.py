@@ -2,16 +2,15 @@
 import json
 from pathlib import Path
 import sys
-
 import h5py
 import numpy as np
 import pytest
 from astropy.table import Table
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / 'CESS_v0.8.6'
+CORE = ROOT / 'src'
 sys.path.insert(0, str(CORE))
-from runner_support import (atomic_hdf5, combine_band_masks, join_processes,
+from cess.pipeline.support import (atomic_hdf5, combine_band_masks,
                             output_destination, pad_spectral_rows,
                             record_runner_provenance, throughput_interpolator,
                             write_el_details, write_vlen_rows, SourceSelection,
@@ -93,17 +92,6 @@ def test_atomic_publish_race_does_not_replace_winner(tmp_path):
     assert len(list(tmp_path.iterdir())) == 1
 
 
-def test_join_waits_for_every_worker_and_reports_failures(capsys):
-    class Worker:
-        def __init__(self, name, code):
-            self.name, self.exitcode, self.joins = name, code, 0
-        def join(self):
-            self.joins += 1
-    processes = [Worker('slow', 0), Worker('failed', 7), Worker('last', 0)]
-    assert join_processes(processes) == 1
-    assert [worker.joins for worker in processes] == [1, 1, 1]
-    assert 'failed with exit code 7' in capsys.readouterr().err
-    assert join_processes([]) == 0
 
 
 def empty_peak_table(count_name):
@@ -157,9 +145,8 @@ def test_el_postprocess_does_not_invent_input_noise_provenance(tmp_path):
             assert handle.attrs[name].startswith('unknown')
 
 
-@pytest.mark.parametrize('module', ['run', 'run_gravity_zouhu', 'run_gravity_zouhu_fix'])
+@pytest.mark.parametrize('module', ['cess.pipeline.standard', 'cess.pipeline.paired'])
 def test_zero_source_output_keeps_spectral_axes(tmp_path, monkeypatch, module):
-    # The fixture's subprocess imports root-level compatibility runners too.
     monkeypatch.setenv('PYTHONPATH', str(ROOT))
     path = run_fixture(tmp_path, module=module, count=0)
     with h5py.File(str(path), 'r') as handle:
@@ -172,9 +159,9 @@ def test_zero_source_output_keeps_spectral_axes(tmp_path, monkeypatch, module):
         assert handle.attrs['cess_repair_revision'] == '20261024-D4'
 
 
-def test_root_gravity_invalid_wce_rows_align(tmp_path, monkeypatch):
+def test_paired_invalid_wce_rows_align(tmp_path, monkeypatch):
     monkeypatch.setenv('PYTHONPATH', str(ROOT))
-    path = run_fixture(tmp_path, module='run_gravity_zouhu_fix',
+    path = run_fixture(tmp_path, module='cess.pipeline.paired',
                        switches=('wave_cal=true', 'el_detect=true'),
                        count=2, invalid=(0,))
     with h5py.File(str(path), 'r') as handle:
@@ -243,7 +230,8 @@ def test_runner_imports_ignore_argv_and_do_not_open_resources(tmp_path):
     import os
     import subprocess
     code = """
-import sys, builtins
+import sys
+import builtins
 from pathlib import Path
 sys.path[:0] = [CORE, ROOT]
 sys.argv = ['unrelated-program', '--not-a-CESS-argument']
@@ -254,7 +242,9 @@ def checked_open(file, *args, **kwargs):
         raise AssertionError('import tried to read a scientific resource: ' + path)
     return old_open(file, *args, **kwargs)
 builtins.open = checked_open
-import run, run_gravity_zouhu, run_gravity_zouhu_fix, run_el_detect
+import cess.pipeline.standard as run
+import cess.pipeline.paired as run_gravity_zouhu
+import cess.pipeline.emission as run_el_detect
 assert run._CONFIGURATION is None
 assert run_gravity_zouhu._CONFIGURATION is None
 assert run_el_detect._CONFIGURATION is None
@@ -267,9 +257,9 @@ assert run_el_detect._CONFIGURATION is None
 
 
 def test_configure_is_explicit_and_keeps_fits_and_pickle_lazy(tmp_path, monkeypatch):
-    import run
-    from cess_config import load_config
-    parameters = load_config(CORE / 'emulator_parameters.json')
+    import cess.pipeline.standard as run
+    from cess.config.loader import load_config
+    parameters = load_config(CORE / 'cess/data/emulator_parameters.json')
     parameters['output_path'] = str(tmp_path)
     def forbidden(*args, **kwargs):
         raise AssertionError('configure loaded a scientific resource')
@@ -279,15 +269,15 @@ def test_configure_is_explicit_and_keeps_fits_and_pickle_lazy(tmp_path, monkeypa
     assert run.apply_morphology_effect and not run.apply_photometric
 
 
-@pytest.mark.parametrize('module_name', ['run', 'run_gravity_zouhu'])
+@pytest.mark.parametrize('module_name', ['cess.pipeline.standard', 'cess.pipeline.paired'])
 def test_per_source_seed_is_independent_of_chunk_boundaries(tmp_path, module_name):
     import importlib
-    from cess_config import load_config
+    from cess.config.loader import load_config
     module = importlib.import_module(module_name)
     input_dir = tmp_path / 'input'
     input_dir.mkdir()
     make_input(input_dir / 'synthetic.hdf5', count=4, invalid=(0,))
-    parameters = load_config(CORE / 'emulator_parameters.json')
+    parameters = load_config(CORE / 'cess/data/emulator_parameters.json')
     parameters['output_path'] = str(tmp_path / 'whole')
     parameters['photometry_aperture_fraction'] = .5
     options = {'morph': True, 'wave_cal': True, 'photo': True, 'el_detect': False}
@@ -326,16 +316,16 @@ def test_per_source_seed_is_independent_of_chunk_boundaries(tmp_path, module_nam
         with h5py.File(str(overlapping), 'r') as part:
             np.testing.assert_array_equal(part['input_row_indices'][:], [1, 2])
             np.testing.assert_array_equal(part['parameters_desi'][:], full['parameters_desi'][1:3])
-        if module_name == 'run':
+        if module_name == 'cess.pipeline.standard':
             assert full['zero_order_phot'].shape == (4, 9)
             assert full['zero_order/GU/total_exposure_s'][1] == 300.
             assert full['zero_order/GU/aperture_fraction'][1] == .5
 
 
 def test_nondefault_aperture_fraction_counts_and_flux_calibration():
-    from cess_config import load_config
-    from main import emulator
-    parameters = load_config(CORE / 'emulator_parameters.json')
+    from cess.config.loader import load_config
+    from cess.engine import emulator
+    parameters = load_config(CORE / 'cess/data/emulator_parameters.json')
     parameters['photometry_aperture_fraction'] = .5
     engine = emulator(config=parameters)
     wave = np.linspace(1000., 10000., 51)
@@ -357,8 +347,8 @@ def test_nondefault_aperture_fraction_counts_and_flux_calibration():
 
 
 def test_el_postprocessing_preserves_catalogue_and_parent_row_indices(tmp_path):
-    import run_el_detect
-    from cess_config import load_config
+    import cess.pipeline.emission as run_el_detect
+    from cess.config.loader import load_config
     path = tmp_path / 'parent.hdf5'
     with h5py.File(str(path), 'w') as handle:
         handle['ID'] = np.array([b'a', b'b', b'c'])
@@ -368,7 +358,7 @@ def test_el_postprocessing_preserves_catalogue_and_parent_row_indices(tmp_path):
             group['wave'] = [4000., 5000., 6000.]
             for name in ('flux_ujy', 'flux_ujy_with_noise', 'snr'):
                 group[name] = np.zeros((3, 3))
-    parameters = load_config(CORE / 'emulator_parameters.json')
+    parameters = load_config(CORE / 'cess/data/emulator_parameters.json')
     output = run_el_detect.task(str(tmp_path), path.name, output_dir=tmp_path / 'el',
         config=parameters, source_start=1, source_stop=3)
     with h5py.File(str(output), 'r') as handle:
@@ -378,8 +368,8 @@ def test_el_postprocessing_preserves_catalogue_and_parent_row_indices(tmp_path):
 
 
 def test_photon_bin_metadata_and_exact_center_derived_edges(tmp_path):
-    from cess_config import load_config
-    parameters = load_config(CORE / 'emulator_parameters.json')
+    from cess.config.loader import load_config
+    parameters = load_config(CORE / 'cess/data/emulator_parameters.json')
     parameters['template_lsf'] = {'mode': 'fwhm_rest', 'value': 2.}
     parameters['template_lsf_broader_policy'] = 'preserve'
     parameters['template_lsf_nominal_evidence'] = {
@@ -450,7 +440,7 @@ def test_el_postprocessing_inherits_parent_spectral_semantics_and_future_notes(t
 
 
 def test_response_products_keep_detector_counts_separate_from_calibration(tmp_path):
-    from main import h
+    from cess.engine import h
     parameters = dict(radi=1., expt=10., expnum=2)
     path = tmp_path / 'response.hdf5'
     with atomic_hdf5(path) as handle:
@@ -473,12 +463,12 @@ def test_response_products_keep_detector_counts_separate_from_calibration(tmp_pa
         assert group['flux_elec_0th'].attrs['n_exposures'] == 2
 
 
-@pytest.mark.parametrize('module_name', ['run', 'run_gravity_zouhu'])
+@pytest.mark.parametrize('module_name', ['cess.pipeline.standard', 'cess.pipeline.paired'])
 def test_runner_response_rates_counts_native_sky_and_calibrated_model(tmp_path, module_name):
     import importlib
-    from cess_config import load_config
-    from main import emulator, h
-    parameters = load_config(CORE / 'emulator_parameters.json')
+    from cess.config.loader import load_config
+    from cess.engine import emulator, h
+    parameters = load_config(CORE / 'cess/data/emulator_parameters.json')
     input_dir = tmp_path / 'input'
     input_dir.mkdir()
     make_input(input_dir / 'synthetic.hdf5', count=2, invalid=(0,))
@@ -493,7 +483,7 @@ def test_runner_response_rates_counts_native_sky_and_calibrated_model(tmp_path, 
         assert handle.attrs['schema_version'] == '2.5'
         for band in ('GU', 'GV', 'GI'):
             group = handle[band]
-            suffixes = ('', '_0th') if module_name == 'run' else ('',)
+            suffixes = ('', '_0th') if module_name == 'cess.pipeline.standard' else ('',)
             for suffix in suffixes:
                 counts = group['flux_elec' + suffix][:]
                 rate = group['source_electron_rate_pre_morph' + suffix][:]
@@ -518,6 +508,6 @@ def test_runner_response_rates_counts_native_sky_and_calibrated_model(tmp_path, 
                 np.testing.assert_array_equal(group['detector_model_mask' + suffix][:], np.isfinite(counts))
                 np.testing.assert_array_equal(group['calibration_support_mask' + suffix][:],
                     np.isfinite(group['ferr' + suffix][:]))
-            if module_name == 'run_gravity_zouhu':
+            if module_name == 'cess.pipeline.paired':
                 np.testing.assert_array_equal(group['flux_ujy_model'][:], group['flux_ujy_model_wce'][:])
                 np.testing.assert_array_equal(group['detector_model_mask'][:], group['detector_model_mask_wce'][:])

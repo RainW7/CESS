@@ -2,19 +2,18 @@
 from pathlib import Path
 from types import SimpleNamespace
 import sys
-
 import h5py
 import numpy as np
 import pytest
 from astropy.table import Table
 
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 sys.path.insert(0, str(CORE))
-from cess_pipeline import (BANDS, PHOTOMETRIC_BANDS, prepare_resources,
+from cess.pipeline.common import (BANDS, PHOTOMETRIC_BANDS, prepare_resources,
     prepare_source_profile, measure_source_bands, photometry_columns,
     write_legacy_el_products, write_common_products)
-from cess_random import source_rng, legacy_rng
-from runner_support import throughput_arrays, throughput_interpolator, write_vlen_rows
+from cess.pipeline.random import source_rng, legacy_rng
+from cess.pipeline.support import throughput_arrays, throughput_interpolator, write_vlen_rows
 
 
 @pytest.mark.parametrize('paired', [False, True])
@@ -34,7 +33,7 @@ def test_resource_setup_uses_only_mode_resources_and_late_bound_operations(monke
     for band in PHOTOMETRIC_BANDS:
         config[band + 'tp_path'] = band
     context = {'provenance': {'version': 3}}
-    import cess_mge_runtime
+    import cess.morphology.runtime as cess_mge_runtime
     monkeypatch.setattr(cess_mge_runtime, 'load_mge_source_library', lambda settings: context)
     def libraries(settings, supplied_axes):
         assert not mge and supplied_axes is axes

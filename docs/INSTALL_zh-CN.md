@@ -3,8 +3,7 @@
 [English](INSTALL.md) | [简体中文](INSTALL_zh-CN.md)
 
 适用于 CESS v0.9.0 一维版本。软件要求 Python >=3.12,<3.13。
-请先取得本版源码或本地/发布页提供的 wheel、sdist；是否已在线发布以仓库实际 release 为准。
-以下步骤从这些文件安装，不要求 PyPI 上已经发布同名软件。
+从[CESS仓库](https://github.com/RainW7/CESS)下载源码或发行包，再按以下步骤安装。
 
 Linux、macOS ARM64 和 x86_64 应分别使用对应平台的解释器与依赖，
 不能复制 Mac 的 Conda/venv 目录作为服务器环境。
@@ -103,7 +102,6 @@ throughput、背景和形态资源随 CESS 包安装，常规一维运行无需�
 | `python -m pip install '.[tools,plot,render,test]'` | 开发、完整测试与相关可选工具 |
 
 常规预存库一维模拟不必安装 GalSim。当前 Python3.12 依赖以根目录包声明为准，
-不使用 `CESS_v0.8.6` 中的历史环境文件。
 
 ### 1.6 安装可选桌面 viewer
 
@@ -127,11 +125,10 @@ Conda缺少Tk时可在激活环境运行 `conda install tk`，用 `python -m tki
 
 最终依赖以仓库根`setup.cfg`、`pyproject.toml`和[requirements目录](../requirements)为准。
 核心模拟从预存库读取形态或使用已生成MGE库时，不要求加载GalSim。
-声明兼容的依赖版本不等于已经验证所有平台组合；安装失败时先核对解释器、架构和对应wheel。
+安装失败时先核对解释器、架构和对应wheel。
 
 可复现的 macOS ARM64 依赖记录见[平台锁](migration_py312_20261023/requirements-macos-arm64-py312.lock)。
-该锁排除CESS自身，软件由具体wheel/源码版本独立确定；该锁不是Gravity/Linux的安装清单，
-也不表示已经验证所有新建Conda环境或平台组合。
+该锁排除CESS自身，软件由具体wheel/源码版本独立确定。其他平台及Linux服务器使用上面的依赖分组安装。
 
 ## 3. 选择运行环境
 
@@ -190,7 +187,6 @@ Gravity使用独立Linux环境和[服务器脚本](../scripts/gravity/README_zh-
 
 ## 5. 从源码运行测试
 
-源码分发包含正式tests、必要兼容入口和小型历史源码oracle，不需要私有BayeSED输入或整套开发存档。
 在源码根目录和已激活、具备测试依赖的环境中运行：
 
 ```bash
@@ -199,5 +195,4 @@ env PYTHONPATH="$PWD/src" PYTHONDONTWRITEBYTECODE=1 \
   python -s -B -m pytest -q -p no:cacheprovider tests
 ```
 
-wheel主要供安装使用；源码分发包含测试与必要兼容文件，运行上述测试应使用源码根目录。
-实现测试和仪器/样本科学定标有不同作用；具体研究仍需核对PSF/LSF、背景及响应资源的定义。
+上述测试在源码目录运行。科研使用时还需核对PSF/LSF、背景及响应资源的定义。

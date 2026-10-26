@@ -6,10 +6,8 @@ import numpy as np
 import pytest
 from scipy.special import ndtr
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'))
-import cess_spectral as spectral
-
-
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+import cess.spectra.integration as spectral
 def old_probability(low, high):
     return np.where(low >= 0, ndtr(-low) - ndtr(-high), ndtr(high) - ndtr(low))
 

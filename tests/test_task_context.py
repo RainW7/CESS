@@ -3,24 +3,22 @@ import importlib
 from pathlib import Path
 import random
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'src'))
 from cess.config.loader import load_config
-from cess.morphology import legacy
+from cess.morphology import empirical
 from cess.morphology.sampling import MorphologySampler
 from cess.pipeline.context import SimulationContext
 from test_pipeline_smoke import make_input
 
 
 def test_contexts_do_not_change_legacy_config_or_share_nested_state():
-    config = load_config(ROOT/'CESS_v0.8.6/emulator_parameters.json')
-    legacy.configure(config)
-    active = legacy._config
+    config = load_config(ROOT/'src/cess/data/emulator_parameters.json')
+    empirical.configure(config)
+    active = empirical._config
     first = SimulationContext(config, {'photo': True})
     other = dict(config, arcsecperpix=.1)
     second = SimulationContext(other)
@@ -31,18 +29,18 @@ def test_contexts_do_not_change_legacy_config_or_share_nested_state():
     assert not second.options['apply_photometric']
     assert first.morphology is not second.morphology
     assert first.morphology._gems_data is second.morphology._gems_data is None
-    assert legacy._config is active
+    assert empirical._config is active
     assert first.config['arcsecperpix'] == .074
     assert second.config['arcsecperpix'] == .1
 
 
 def test_task_sampler_preserves_draws_and_random_state():
-    config = load_config(ROOT/'CESS_v0.8.6/emulator_parameters.json')
+    config = load_config(ROOT/'src/cess/data/emulator_parameters.json')
     sampler = MorphologySampler(config)
-    legacy.configure(config)
+    empirical.configure(config)
     arguments = [(18.,14.,21.,.5,5.,10.,z) for z in (.01,.2,.7)]*3
     np.random.seed(1214)
-    expected = [legacy.get_2d_param(*args) for args in arguments]
+    expected = [empirical.get_2d_param(*args) for args in arguments]
     after = np.random.random(4)
     np.random.seed(1214)
     actual = [sampler.get_2d_param(*args) for args in arguments]
@@ -73,7 +71,7 @@ def test_modern_context_matches_legacy_entry_values(tmp_path, mode, seed):
     driver = importlib.import_module('cess.pipeline.'+mode)
     source = tmp_path/'fixture.hdf5'
     make_input(source, count=3, invalid=(0,))
-    config = load_config(ROOT/'CESS_v0.8.6/emulator_parameters.json')
+    config = load_config(ROOT/'src/cess/data/emulator_parameters.json')
     options = dict(morph=True, wave_cal=True, photo=True, el_detect=True)
     products = []
     for label, function in (('compatibility', driver.task), ('context', driver.simulate_file)):

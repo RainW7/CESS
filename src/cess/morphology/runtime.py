@@ -16,7 +16,7 @@ import h5py
 import numpy as np
 
 from cess.morphology.bundle import verify_mge_bundle
-from cess.morphology.legacy_bundle import _regular_member
+from cess.morphology.profile_bundle import _regular_member
 
 AXES = ('n','re_pixel','pa_deg','axis_ratio')
 _LIBRARIES = OrderedDict()
@@ -152,7 +152,7 @@ def verify_mge_source_binding(settings,provenance):
 
 def select_mge_grid(context,n,re,pa,q):
     """Return nearest grid parameters and indices using the established PA fold."""
-    from cess.morphology.legacy import fold_position_angle
+    from cess.morphology.empirical import fold_position_angle
     values=(n,re,pa,q)
     if any(isinstance(v,(bool,np.bool_)) or not isinstance(v,(int,float,np.integer,np.floating))
            or not np.isfinite(v) for v in values):

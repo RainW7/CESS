@@ -8,16 +8,13 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
-
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / "CESS_v0.8.6"
+CORE = ROOT / "src"
 sys.path.insert(0, str(CORE))
-from cess_config import load_config
+from cess.config.loader import load_config
 
 
 def make_input(path, count=4, invalid=()):
@@ -47,12 +44,12 @@ def make_input(path, count=4, invalid=()):
         sed.attrs["unit"] = "uJy"
 
 
-def run_fixture(directory, module="run", switches=(), count=4, invalid=()):
+def run_fixture(directory, module="cess.pipeline.standard", switches=(), count=4, invalid=()):
     input_dir, output_dir = directory / "input", directory / "output"
     input_dir.mkdir()
     output_dir.mkdir()
     make_input(input_dir / "synthetic.hdf5", count=count, invalid=invalid)
-    config = load_config(CORE / "emulator_parameters.json")
+    config = load_config(CORE / "cess/data/emulator_parameters.json")
     config["input_path"] = str(input_dir) + os.sep
     config["output_path"] = str(output_dir) + os.sep
     config["el_input_path"] = str(input_dir) + os.sep
@@ -82,10 +79,10 @@ def run_fixture(directory, module="run", switches=(), count=4, invalid=()):
 
 
 @pytest.mark.parametrize("module,switches", [
-    ("run", ()),
-    ("run", ("morph=true", "wave_cal=true", "photo=true", "el_detect=true")),
-    ("run_gravity_zouhu", ()),
-    ("run_gravity_zouhu", ("morph=true", "wave_cal=true", "el_detect=true")),
+    ("cess.pipeline.standard", ()),
+    ("cess.pipeline.standard", ("morph=true", "wave_cal=true", "photo=true", "el_detect=true")),
+    ("cess.pipeline.paired", ()),
+    ("cess.pipeline.paired", ("morph=true", "wave_cal=true", "el_detect=true")),
 ])
 def test_mixed_valid_invalid_rows(tmp_path, module, switches):
     path = run_fixture(tmp_path, module, switches, invalid=(0, 2))

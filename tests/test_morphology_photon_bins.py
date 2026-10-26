@@ -4,9 +4,8 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'))
-from main import emulator
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+from cess.engine import emulator
 
 
 @pytest.mark.parametrize('profile', [[1.], [.1, .2, .3, .4], [.2, .6, .2]])

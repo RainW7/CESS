@@ -9,18 +9,16 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / 'CESS_v0.8.6'
+CORE = ROOT / 'src'
 sys.path.insert(0, str(CORE))
 
-import cess_mge
-import cess_mge_library as writer
-from cess_config import load_config
+import cess.morphology.mge as cess_mge
+import cess.morphology.generator as writer
+from cess.config.loader import load_config
 
 AXES = {'n': [.5, 1.], 're_pixel': [4.], 'pa_deg': [0., 30.], 'axis_ratio': [.6]}
 X_EDGES = np.asarray([-1.5, -.5, .5, 1.5])
@@ -32,7 +30,7 @@ def sha(path):
 
 
 def config():
-    return load_config(CORE / 'emulator_parameters.json')
+    return load_config(CORE / 'cess/data/emulator_parameters.json')
 
 
 def tree(directory):
@@ -288,11 +286,11 @@ def test_foreign_cwd_cli_dryrun_then_tiny_generation(tmp_path):
     grid.write_text(json.dumps(dict(n=[.5], re_pixel=[4.], pa_deg=[0., 30.], axis_ratio=[1.])))
     edges.write_text(json.dumps({'x_edges_pixel': X_EDGES.tolist(), 'y_edges_pixel': Y_EDGES.tolist()}))
     output = tmp_path / 'foreign-bundle'
-    command = [sys.executable, '-B', str(CORE / 'cess_mge_library.py'),
-        '--config', str(CORE / 'emulator_parameters.json'), '--grid', str(grid),
+    command = [sys.executable, '-B', '-m', 'cess.morphology.generator',
+        '--config', str(CORE / 'cess/data/emulator_parameters.json'), '--grid', str(grid),
         '--edges', str(edges), '--output', str(output)]
-    environment = dict(os.environ, PYTHONDONTWRITEBYTECODE='1', OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='1')
-    environment.pop('PYTHONPATH', None)
+    environment = dict(os.environ, PYTHONPATH=str(CORE), PYTHONDONTWRITEBYTECODE='1', OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='1')
+    environment['PYTHONPATH'] = str(CORE)
     planned = subprocess.run(command + ['--dry-run'], cwd=str(foreign), env=environment,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=60)
     assert planned.returncode == 0, planned.stderr
@@ -307,6 +305,6 @@ def test_foreign_cwd_cli_dryrun_then_tiny_generation(tmp_path):
 
 
 def test_c7_verifier_does_not_accept_the_new_experimental_artifact(generated):
-    from cess_profile_bundle import verify_profile_bundle
+    from cess.morphology.profile_bundle import verify_profile_bundle
     with pytest.raises(ValueError):
         verify_profile_bundle(generated[0])

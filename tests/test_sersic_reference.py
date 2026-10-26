@@ -6,14 +6,13 @@ projection, rather than the production variance-mixture representation.
 import json
 from pathlib import Path
 import sys
-
 import numpy as np
 import pytest
 from scipy.integrate import quad
 from scipy.special import gammaincinv, k1, ndtr
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'CESS_v0.8.6'))
-from cess_reference import sersic_pixel_reference
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
+from cess.morphology.reference import sersic_pixel_reference
 
 
 def _normal_mass(lo,hi):

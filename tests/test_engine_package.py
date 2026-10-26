@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-
 import numpy as np
 import pytest
 from astropy import units as u
@@ -65,13 +64,17 @@ def test_composition_retains_public_and_static_method_ownership():
 
 def test_import_has_no_configuration_resource_or_rng_work(tmp_path):
     code = r'''
-import importlib, pickle, sys
+import importlib
+import pickle
+import sys
 import numpy as np
 import h5py
 from astropy.table import Table
 import cess.config.loader as config
 # Preload third-party dependencies before checking CESS composition work.
-import cess.spectra.operator, cess.instrument.detector, cess.lines.detection
+import cess.spectra.operator
+import cess.instrument.detector
+import cess.lines.detection
 assert 'cess.engine' not in sys.modules
 def forbidden(*args, **kwargs): raise AssertionError('unexpected I/O/config load')
 config.load_config = forbidden

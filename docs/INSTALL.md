@@ -3,9 +3,7 @@
 [English](INSTALL.md) | [简体中文](INSTALL_zh-CN.md)
 
 This guide applies to the one-dimensional CESS v0.9.0 release. CESS requires Python >=3.12,<3.13.
-Obtain this version's source tree, wheel, or source distribution (sdist) from a local copy or the release page;
-the repository's actual releases determine online availability. The instructions below install from those files
-and do not assume that this software has been published under the same name on PyPI.
+Download source or a distribution archive from the [CESS repository](https://github.com/RainW7/CESS). The commands below install from that source or archive.
 
 Use an interpreter and dependencies built for the target platform: Linux, macOS ARM64, or x86_64.
 Copying a Mac Conda/venv directory to a server does not create a usable server environment.
@@ -105,7 +103,7 @@ From the source root, choose an installation command appropriate to your needs:
 | `python -m pip install '.[tools,plot,render,test]'` | Development, full tests, and the related optional tools |
 
 Normal 1D simulation with precomputed morphology libraries does not require GalSim.
-Use the current package declarations for Python 3.12 dependencies, rather than historical environment files in `CESS_v0.8.6`.
+Use the current package declarations for Python 3.12 dependencies.
 
 ### 1.6 Install the optional desktop viewer
 
@@ -130,12 +128,11 @@ See the [HDF5 viewer guide](VIEWER.md).
 
 The authoritative requirements are the root `setup.cfg`, `pyproject.toml`, and [requirements directory](../requirements).
 Core simulation using precomputed profiles or an already generated MGE library does not need to load GalSim.
-Declared dependency compatibility does not establish that every platform combination has been tested. If installation fails,
-check the interpreter, architecture, and availability of the corresponding wheels first.
+If installation fails, check the interpreter, architecture, and availability of the corresponding wheels first.
 
 A reproducible macOS ARM64 dependency record is available in the [platform lock file](migration_py312_20261023/requirements-macos-arm64-py312.lock).
 It excludes CESS itself, whose identity is determined separately by the selected wheel or source version.
-This lock is not a Gravity/Linux installation list and does not certify every newly created Conda environment or platform combination.
+Use the requirement profiles above for other platforms, including Linux servers.
 
 ## 3. Select the runtime environment
 
@@ -196,9 +193,7 @@ Gravity uses its own Linux environment and the [server scripts](../scripts/gravi
 
 ## 5. Run tests from source
 
-The source distribution includes the tests, required compatibility entry points, and small historical source oracles.
-It does not require private BayeSED inputs or the full development archive. From the source root, with an active environment
-containing the test dependencies, run:
+From the source root, with an active environment containing the test dependencies, run:
 
 ```bash
 env PYTHONPATH="$PWD/src" PYTHONDONTWRITEBYTECODE=1 \
@@ -206,6 +201,4 @@ env PYTHONPATH="$PWD/src" PYTHONDONTWRITEBYTECODE=1 \
   python -s -B -m pytest -q -p no:cacheprovider tests
 ```
 
-The wheel is primarily for installation. The source distribution contains tests and required compatibility files,
-so run the test command from its source root. Implementation testing and instrument/sample calibration serve different purposes;
-scientific work still requires checking the PSF/LSF, background, and response-resource definitions.
+Run tests from the source checkout. For scientific applications, also check the PSF/LSF, background, and response-resource definitions.

@@ -33,7 +33,6 @@ explicit `-j N` allows up to N concurrent file tasks when memory permits.
 | Item | Current behavior |
 | --- | --- |
 | Software | `0.9.0`, preserving and restructuring the 1D simulation workflow |
-| Release status | Local source and artifacts are prepared as v0.9.0; consult the repository for the actual GitHub release |
 | Main input | BayeSED HDF5 galaxy templates, JSON configuration and supporting resources |
 | Main output | GU/GV/GI 1D spectra, optional photometry and line products, and optional run manifests |
 | Python | `>=3.12,<3.13`, in an environment created for the target platform |
@@ -160,8 +159,7 @@ Extracted spectra are not automatically aperture-corrected to total-source flux.
 Historical `_0th` arrays are diagnostic proxies on the first-order grid; actual
 zeroth-order passband measurements are in `zero_order`.
 
-`--output-layout legacy` writes schema 2.5. Legacy script execution and `task(...)`
-retain 2.5; modern CLI and `simulate_file(...)` default to 3.0. The unified reader
+`--output-layout legacy` writes schema 2.5. Modern CLI and `simulate_file(...)` default to 3.0. The unified reader
 supports both. Conversion creates a new file. Subset exports have their own schema.
 
 ## 5. Changes from earlier versions
@@ -183,8 +181,7 @@ operation and traceability:
 - Component-specific source random streams, hashes and strict resume support reproducibility.
 - Python 3.12 dependency profiles replace the historical Python 3.7 environment.
 
-This is more than a directory rearrangement: bug fixes and numerical-model changes
-can alter v0.8.5 results. Later structural deduplication was checked against frozen references.
+Bug fixes and numerical-model changes can alter v0.8.5 results.
 
 ## 6. Installation and a first run
 
@@ -211,6 +208,11 @@ Core-only installation uses `python -m pip install .`. Core packages are NumPy,
 SciPy, Astropy, h5py, Specutils and tqdm; see [exact requirements](requirements/core-py312.txt).
 pandas supports sampling, Matplotlib supports plotting, and optional GalSim supports
 some historical rendering/library tools. Stored-profile 1D runs do not require GalSim.
+
+The repository includes a ready-to-use [toy input catalogue](examples/toy_input.hdf5)
+and its [simulated output](examples/toy_output.hdf5). Run the input directly or
+open the output in the viewer without generating a new example first.
+See the [example guide](examples/README.md) for the file descriptions and commands.
 
 Continue in the activated environment and source root, using fresh destinations:
 
@@ -263,13 +265,8 @@ CESS/
 ├── requirements/       # Python 3.12 dependency profiles
 ├── examples/           # public interface examples
 ├── scripts/gravity/    # preflight and PBS payload
-├── docs/               # installation, operation, formats and models
-└── CESS_v0.8.6/        # selected compatibility entry points and required resources
+└── docs/               # installation, operation, formats and models
 ```
-
-The [release contents](docs/RELEASE_CONTENTS_v0.9.0.md) define the distribution.
-Real catalogues, outputs, historical research and development archives are not
-release files merely because they are present in a workspace.
 
 ## 8. Batch runs and parallelism
 
@@ -313,10 +310,10 @@ Directory input is supported; an unset `CESS_CHUNK_SIZE` keeps whole-file tasks.
 See [Gravity instructions](scripts/gravity/README.md). The runner operates on one
 host and does not distribute work across nodes with MPI.
 
-## 9. Scientific limits and future work
+## 9. Scientific limits
 
-- The nominal R=300 of identified existing input libraries is known, but their
-  detailed template LSF is not certified; the default remains `unknown`.
+- The input-template LSF defaults to `unknown`. Supply its shape and width from
+  the upstream library when available; nominal resolving power alone does not establish an LSF.
 - Upstream Gaussian FWHM uses `*_dlambda`; `*_Res` does not enter that operator.
   Changing `*_Res` alone or treating FWHM as pixel spacing does not reconfigure resolution.
 - The default sky is a fixed template. `background_v_mag` is a provenance label
@@ -326,12 +323,6 @@ host and does not distribute work across nodes with MPI.
   morphology and the specified PSF form.
 - The fast 1D path excludes full-field spectral contamination, CCD-edge projection
   and extraction from a realistic 2D scene.
-
-Engineering checks do not replace instrument or scientific selection-function calibration.
-Future **CESS+** work includes single-source zeroth/first-order images, catalogue/WCS
-CCD scenes, contaminated-spectrum extraction and kinematic recovery studies.
-These are not completed v0.9.0 capabilities; historical prototypes require separate
-adaptation and validation. See the [roadmap](docs/ROADMAP.md).
 
 ## 10. Documentation and licensing
 
@@ -344,13 +335,10 @@ adaptation and validation. See the [roadmap](docs/ROADMAP.md).
 - [Scientific models and limits](docs/SCIENCE_MODELS.md)
 - [Morphology/MGE](docs/MGE_MODELS.md) and [bundle format](docs/MGE_BUNDLE_FORMAT.md)
 - [Gravity/PBS](scripts/gravity/README.md)
-- [Changes](CHANGELOG.md), [release notes](docs/RELEASE_NOTES_v0.9.0.md) and [release contents](docs/RELEASE_CONTENTS_v0.9.0.md)
+- [Changelog](CHANGELOG.md) and [release notes](docs/RELEASE_NOTES_v0.9.0.md)
 - [MIT license](LICENSE) and [resource notice](RESOURCE_NOTICE.md)
 - [简体中文首页](README_zh-CN.md)
 
-Repository: [RainW7/CESS](https://github.com/RainW7/CESS). Check the version and exact
-artifact: local source may precede the remote repository. CESS-owned code and
-documentation use MIT. The maintainer approved distribution of the supplied
-throughput, background and morphology resources; their scope and known provenance
-are recorded separately. External software/data retain their rights. Actual online
-dates and downloads are defined by the GitHub release, not local artifact preparation.
+Repository: [RainW7/CESS](https://github.com/RainW7/CESS). CESS source and documentation
+use the MIT License. Bundled data and dependency notices are described in the
+[resource notice](RESOURCE_NOTICE.md).

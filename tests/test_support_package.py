@@ -5,15 +5,13 @@ from pathlib import Path
 import pickle
 import subprocess
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
 from cess import contracts
-from cess.io import atomic, cache, legacy_writer, selection
+from cess.io import atomic, cache, science_writer, selection
 from cess.pipeline import support
 
 
@@ -23,7 +21,7 @@ def test_aliases_share_contracts_and_one_cache_owner():
     assert support.cached_table is cache.cached_table
     assert support.SourceSelection is selection.SourceSelection
     assert support.atomic_hdf5 is atomic.atomic_hdf5
-    assert support.write_vlen_rows is legacy_writer.write_vlen_rows
+    assert support.write_vlen_rows is science_writer.write_vlen_rows
     assert support.LINE_MEASUREMENT_DTYPE is contracts.LINE_MEASUREMENT_DTYPE
     assert support.MGE_MORPHOLOGY_FIELDS is contracts.MGE_MORPHOLOGY_FIELDS
     assert support.SCHEMA_VERSION == '2.5'
@@ -118,7 +116,7 @@ def test_writer_aliases_preserve_rows_masks_and_attributes(tmp_path):
         np.testing.assert_array_equal(group['source_fraction'][:], [.7, np.nan])
         assert group['spatial_pixels'].attrs['unit'] == 'pixel'
         ragged = file.create_dataset('ragged', (2,), dtype=h5py.vlen_dtype(np.dtype('float64')))
-        legacy_writer.write_vlen_rows(ragged, [[4.], []])
+        science_writer.write_vlen_rows(ragged, [[4.], []])
         np.testing.assert_array_equal(ragged[0], [4.])
         assert ragged[1].size == 0
     padded = support.pad_spectral_rows([np.array([2.]), np.nan], 2, 3)
@@ -146,8 +144,11 @@ def test_provenance_retains_r2_and_shared_code_hash_provider(tmp_path, monkeypat
 
 def test_support_import_does_not_load_config_resources_or_engine(tmp_path):
     code = r'''
-import importlib, pickle, sys
-import numpy as np, h5py
+import importlib
+import pickle
+import sys
+import numpy as np
+import h5py
 import scipy.interpolate
 from astropy.table import Table
 def forbidden(*args, **kwargs): raise AssertionError('unexpected resource read')

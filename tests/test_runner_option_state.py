@@ -2,15 +2,13 @@
 import importlib
 from pathlib import Path
 import sys
-
 import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
-sys.path[:0] = [str(ROOT / 'CESS_v0.8.6'), str(ROOT)]
-from cess_config import load_config
+sys.path[:0] = [str(ROOT / 'src'), str(ROOT)]
+from cess.config.loader import load_config
 
 
-@pytest.mark.parametrize('name', ['run', 'run_gravity_zouhu', 'run_el_detect'])
+@pytest.mark.parametrize('name', ['cess.pipeline.standard', 'cess.pipeline.paired', 'cess.pipeline.emission'])
 def test_explicit_empty_or_partial_options_reset_previous_task_flags(name):
     driver = importlib.import_module(name)
     config = load_config()
@@ -24,7 +22,7 @@ def test_explicit_empty_or_partial_options_reset_previous_task_flags(name):
         apply_wavelength_calibration_error=False, apply_photometric=True, apply_el_detect=False)
 
 
-@pytest.mark.parametrize('name', ['run', 'run_gravity_zouhu', 'run_el_detect'])
+@pytest.mark.parametrize('name', ['cess.pipeline.standard', 'cess.pipeline.paired', 'cess.pipeline.emission'])
 def test_none_options_retains_explicit_configure_workflow(name):
     driver = importlib.import_module(name)
     config = load_config()
@@ -37,9 +35,9 @@ def test_none_options_retains_explicit_configure_workflow(name):
 
 @pytest.mark.parametrize('options,photo', [(None, False), ({'photo': True}, True)])
 def test_job_plans_expand_options_without_using_previous_runner_state(tmp_path, options, photo):
-    from cess_cli import build_jobs
+    from cess.cli.main import build_jobs
     from test_pipeline_smoke import make_input
-    driver = importlib.import_module('run_gravity_zouhu')
+    driver = importlib.import_module('cess.pipeline.paired')
     config = load_config()
     driver.configure(config, options=dict(morph=True, wave_cal=True, el_detect=True))
     source = tmp_path / 'source.hdf5'

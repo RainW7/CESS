@@ -8,26 +8,21 @@ import importlib
 import os
 from pathlib import Path
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
-
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / 'CESS_v0.8.6'
+CORE = ROOT / 'src'
 sys.path.insert(0, str(CORE))
 sys.path.insert(0, str(ROOT))
-from cess_io import read_parameter_table
-import extract_mock_spectra_ds as extract
-
-
+from cess.io.parameters import read_parameter_table
+import cess.io.sampling as extract
 @pytest.fixture(scope='module')
 def morphology():
     previous = os.getcwd()
     try:
         os.chdir(str(CORE))
-        module = importlib.import_module('morphology')
+        module = importlib.import_module('cess.morphology.empirical')
     finally:
         os.chdir(previous)
     return module

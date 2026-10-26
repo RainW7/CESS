@@ -1,17 +1,8 @@
-#!/usr/bin/env python3
-# -*-coding:utf-8 -*-
-'''
-@Env     		:   CESS (Python 3.7.11) on Gravity
-@File    		:   ~/emulator/CESS_v0.8.5/run.py
-@Time    		:   2025/02/14 19:03:41
-@Author  		:   Run Wen
-@Version 		:   0.8.5
-@Contact 		:   wenrun@pmo.ac.cn
-@Description	:   Create simulation data for CSST slitless spectroscopy
+"""Paired simulations with and without wavelength-calibration error.
 
-Change log:
-1.  Fixed the type of the mask array in the hdf5 file, avoding 'TypeError: Object dtype dtype('O') has no native HDF5 equivalent'
-'''
+Both branches share the same source and noise realization. Use simulate_file()
+or cess simulate --mode paired-wce. Original author: Run Wen.
+"""
 
 import sys
 from pathlib import Path
@@ -31,7 +22,7 @@ from cess.pipeline.support import (throughput_interpolator, throughput_arrays,
     pad_spectral_rows, output_destination, atomic_hdf5, write_vlen_rows,
     write_el_details, record_runner_provenance, normalise_options, cached_table,
     configure_morphology, SourceSelection, simulation_filename,
-    legacy_main, measure_runner_band, empty_photometry_result,
+    measure_runner_band, empty_photometry_result,
     write_photometry_results)
 
 from cess.pipeline.common import (prepare_resources, prepare_input, prepare_source_profile,
@@ -90,7 +81,7 @@ def task(input_path, hdf5filename, output_dir=None, config=None, options=None,
          seed=None, source_start=0, source_stop=None):
     """Compatibility API: preserve configure-then-task semantics explicitly."""
     from cess.pipeline.context import SimulationContext, _OPERATION_NAMES
-    from cess.morphology import legacy as morphology
+    from cess.morphology import empirical as morphology
     settings = configure(config, options)
     operations = {name: globals()[name] for name in _OPERATION_NAMES if name in globals()}
     operations.update(legacy_rng=legacy_rng, configure_morphology=configure_morphology)
@@ -484,12 +475,7 @@ def simulate_file(input_path, hdf5filename, output_dir=None, config=None, option
         print(f"Finished, total time costs {toc - tic:0.4f} seconds for "+str(input_file))
         return str(destination)
 
-hdf5filenames = [
-'seedcat2_0420_1199_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5',
-'seedcat2_0420_1204_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5',
-'seedcat2_0420_842_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5',
-'seedcat2_0420_971_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10.hdf5',
-]
 
 if __name__ == '__main__':
-    sys.exit(legacy_main(task, configure, hdf5filenames))
+    from cess.cli.main import main
+    raise SystemExit(main(['simulate', '--mode', 'paired-wce'] + sys.argv[1:]))

@@ -4,22 +4,20 @@ import importlib
 import json
 from pathlib import Path
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / 'CESS_v0.8.6'
+CORE = ROOT / 'src'
 sys.path[:0] = [str(CORE), str(ROOT)]
 
-from cess_config import load_config, validate_config
-from cess_cli import build_jobs
-from cess_manifest import snapshot, verify_product
-from cess_mge_library import generate_mge_library
-from cess_mge_runtime import load_mge_source_library, select_mge_extraction
-from main import emulator, h
-from runner_support import MGE_MORPHOLOGY_FIELDS, SCHEMA_VERSION, REPAIR_REVISION
+from cess.config.loader import load_config, validate_config
+from cess.cli.main import build_jobs
+from cess.io.manifest import snapshot, verify_product
+from cess.morphology.generator import generate_mge_library
+from cess.morphology.runtime import load_mge_source_library, select_mge_extraction
+from cess.engine import emulator, h
+from cess.pipeline.support import MGE_MORPHOLOGY_FIELDS, SCHEMA_VERSION, REPAIR_REVISION
 from test_pipeline_smoke import make_input
 
 
@@ -31,14 +29,14 @@ def strip(convention='point_source', pixels=3, radius=0):
 @pytest.fixture(scope='module')
 def bundle(tmp_path_factory):
     path = tmp_path_factory.mktemp('c12-source-basis') / 'basis'
-    generate_mge_library(load_config(CORE / 'emulator_parameters.json'),
+    generate_mge_library(load_config(CORE / 'cess/data/emulator_parameters.json'),
         dict(n=[.5], re_pixel=[4.], pa_deg=[30.], axis_ratio=[.6]),
         [-10., -1., 0., 1., 10.], path)
     return path
 
 
 def settings(bundle, design=None):
-    config = load_config(CORE / 'emulator_parameters.json')
+    config = load_config(CORE / 'cess/data/emulator_parameters.json')
     config.pop('widthlib_pkl')
     config.pop('heightlib_pkl')
     config.update(positive_profile_library_manifest_path=str(bundle / 'manifest.json'),
@@ -76,10 +74,10 @@ def test_positive_paths_are_explicit_paired_and_exclusive(bundle, problem):
         validate_config(config)
 
 
-def run_tiny(tmp_path, bundle, monkeypatch, module='run', design=None,
+def run_tiny(tmp_path, bundle, monkeypatch, module='cess.pipeline.standard', design=None,
              morph=True, count=1, invalid=(), el=False, wave=False):
-    import morphology
-    import runner_support
+    import cess.morphology.empirical as morphology
+    import cess.pipeline.support as runner_support
     monkeypatch.setattr(morphology, 'get_2d_param', lambda *args: (.5, 4., -30., .6))
     monkeypatch.setattr(runner_support, 'cached_pickle',
                         lambda *args: pytest.fail('mge_strip must not load legacy pickles'))
@@ -90,17 +88,17 @@ def run_tiny(tmp_path, bundle, monkeypatch, module='run', design=None,
     destination = tmp_path / 'products'
     product = Path(importlib.import_module(module).task(str(source.parent), source.name,
         output_dir=destination, config=config, options=options, seed=1214))
-    mode = 'standard' if module == 'run' else 'paired-wce'
+    mode = 'standard' if module == 'cess.pipeline.standard' else 'paired-wce'
     job = build_jobs([source], destination, config, options, mode, seed=1214)[0]
     state = snapshot(config, options, mode, 1214, [job])
     result = verify_product(job, state)
     return product, config, options, job, state, result
 
 
-@pytest.mark.parametrize('module', ['run', 'run_gravity_zouhu'])
+@pytest.mark.parametrize('module', ['cess.pipeline.standard', 'cess.pipeline.paired'])
 @pytest.mark.parametrize('convention', ['point_source', 'pre_psf'])
 def test_joint_fraction_and_finite_kernel_are_applied_once_to_counts_and_noise(tmp_path, bundle, monkeypatch, module, convention):
-    name = 'add_noise' if module == 'run' else 'add_noise_zouhu'
+    name = 'add_noise' if module == 'cess.pipeline.standard' else 'add_noise_zouhu'
     original = getattr(emulator, name)
     calls = []
 
@@ -112,7 +110,7 @@ def test_joint_fraction_and_finite_kernel_are_applied_once_to_counts_and_noise(t
     monkeypatch.setattr(emulator, name, capture)
     product, config, options, job, state, result = run_tiny(tmp_path, bundle, monkeypatch,
         module=module, design=strip(convention))
-    assert len(calls) == (6 if module == 'run' else 3)
+    assert len(calls) == (6 if module == 'cess.pipeline.standard' else 3)
     selected = select_mge_extraction(load_mge_source_library(validate_config(config)),
         .5, 4., -30., .6, validate_config(config), apply_morphology=True)
     fraction, mass = selected['source_fraction'], float(selected['width'].sum())
@@ -197,10 +195,10 @@ def test_empty_and_invalid_sources_have_aligned_nan_metadata(tmp_path, bundle, m
 def test_paired_wce_and_el_subset_inherit_parent_model_with_legacy_el_config(tmp_path, bundle, monkeypatch):
     monkeypatch.setattr(emulator, '_sample_wave_offset', staticmethod(lambda rng=None: .5))
     product, config, _, _, _, _ = run_tiny(tmp_path, bundle, monkeypatch,
-        module='run_gravity_zouhu', design=strip('pre_psf', radius=2),
+        module='cess.pipeline.paired', design=strip('pre_psf', radius=2),
         count=2, invalid=(1,), wave=True, el=True)
-    import run_el_detect
-    el_config = load_config(CORE / 'emulator_parameters.json')
+    import cess.pipeline.emission as run_el_detect
+    el_config = load_config(CORE / 'cess/data/emulator_parameters.json')
     destination = tmp_path / 'el'
     child = run_el_detect.task(str(product.parent), product.name, output_dir=destination,
         config=el_config, seed=1214, source_start=0, source_stop=1)

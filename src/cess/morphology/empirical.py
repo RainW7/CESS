@@ -1,17 +1,10 @@
-#!/usr/bin/env python3
-# -*-coding:utf-8 -*-
-'''
-@Env     		:   grizli (Python 3.7.11) on Macbook Pro
-@File    		:   ~/emulator/CESS_v0.8.5/morphology.py
-@Time    		:   2024/11/04 16:20:10
-@Author  		:   Run Wen
-@Version 		:   0.8.5
-@Contact 		:   wenrun@pmo.ac.cn
-@Description	:   Add 2d morphological parameters to the galaxy and get 2d profile distribution functions.
+"""Empirical galaxy morphology and sampled one-dimensional source profiles.
 
-Change log:
-1.  set a lower limit of ar for the large Re to avoid the extremely edge-on galaxies.
-'''
+The GEMS catalogue supplies the distribution of Sersic index and axis ratio.
+Re uses detector pixels, PA uses degrees, and generated profiles follow the
+configured sampling and rendering conventions. Optional image rendering loads
+GalSim only when requested. Original implementation: Run Wen.
+"""
 
 import numpy as np
 import math

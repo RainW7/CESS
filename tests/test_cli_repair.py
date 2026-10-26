@@ -3,25 +3,23 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
 from test_pipeline_smoke import make_input
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / "CESS_v0.8.6"
+CORE = ROOT / "src"
 sys.path.insert(0, str(CORE))
-from cess_cli import build_jobs, discover_inputs, estimate_peak_gib
-from cess_config import load_config
+from cess.cli.main import build_jobs, discover_inputs, estimate_peak_gib
+from cess.config.loader import load_config
 
 
 def fixture_files(directory, count=3):
     inputs = directory / "input"
     inputs.mkdir()
     make_input(inputs / "synthetic.hdf5", count=count)
-    config = load_config(CORE / "emulator_parameters.json")
+    config = load_config(CORE / "cess/data/emulator_parameters.json")
     config["input_path"] = str(inputs)
     config["output_path"] = str(directory / "output")
     config_path = directory / "parameters.json"
@@ -30,10 +28,13 @@ def fixture_files(directory, count=3):
 
 
 def call_cli(directory, arguments):
-    environment = dict(os.environ, MPLCONFIGDIR=str(directory / "mpl"),
+    # These fixtures exercise the schema-2.5 reader; select that format explicitly.
+    if arguments and arguments[0] in ('simulate', 'el-detect') and '--output-layout' not in arguments:
+        arguments = [arguments[0], '--output-layout', 'legacy', *arguments[1:]]
+    environment = dict(os.environ, PYTHONPATH=str(CORE), MPLCONFIGDIR=str(directory / "mpl"),
                        PYTHONDONTWRITEBYTECODE="1", OPENBLAS_NUM_THREADS="1",
                        OMP_NUM_THREADS="1")
-    return subprocess.run([sys.executable, "-B", str(CORE / "cess_cli.py")] + arguments,
+    return subprocess.run([sys.executable, "-B", '-m', 'cess'] + arguments,
                           cwd=str(directory), env=environment, stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT, universal_newlines=True, timeout=90)
 

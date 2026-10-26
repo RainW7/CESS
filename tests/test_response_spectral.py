@@ -7,17 +7,16 @@ The common 1/h, collecting area and exposure factors are intentionally omitted.
 
 from pathlib import Path
 import sys
-
 import numpy as np
 import pytest
 from scipy.integrate import quad
 from scipy.special import ndtr
 
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 if str(CORE) not in sys.path:
     sys.path.insert(0, str(CORE))
 
-from cess_spectral import convolve_to_bins, integrate_response, response_curve
+from cess.spectra.integration import convolve_to_bins, integrate_response, response_curve
 
 
 def independent_edges(centers):

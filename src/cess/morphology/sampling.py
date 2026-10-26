@@ -3,28 +3,28 @@ from copy import deepcopy
 import numpy as np
 from astropy.io import fits
 from cess.config.loader import load_config
-from cess.morphology import legacy as _legacy
+from cess.morphology import empirical as _empirical
 
-cosmo = _legacy.cosmo
-Mstar = _legacy.Mstar
-et_z_025_lower = _legacy.et_z_025_lower
-et_z_025_median = _legacy.et_z_025_median
-et_z_025_upper = _legacy.et_z_025_upper
-lt_z_025_lower = _legacy.lt_z_025_lower
-lt_z_025_median = _legacy.lt_z_025_median
-lt_z_025_upper = _legacy.lt_z_025_upper
-et_z_075_lower = _legacy.et_z_075_lower
-et_z_075_median = _legacy.et_z_075_median
-et_z_075_upper = _legacy.et_z_075_upper
-lt_z_075_lower = _legacy.lt_z_075_lower
-lt_z_075_median = _legacy.lt_z_075_median
-lt_z_075_upper = _legacy.lt_z_075_upper
+cosmo = _empirical.cosmo
+Mstar = _empirical.Mstar
+et_z_025_lower = _empirical.et_z_025_lower
+et_z_025_median = _empirical.et_z_025_median
+et_z_025_upper = _empirical.et_z_025_upper
+lt_z_025_lower = _empirical.lt_z_025_lower
+lt_z_025_median = _empirical.lt_z_025_median
+lt_z_025_upper = _empirical.lt_z_025_upper
+et_z_075_lower = _empirical.et_z_075_lower
+et_z_075_median = _empirical.et_z_075_median
+et_z_075_upper = _empirical.et_z_075_upper
+lt_z_075_lower = _empirical.lt_z_075_lower
+lt_z_075_median = _empirical.lt_z_075_median
+lt_z_075_upper = _empirical.lt_z_075_upper
 
 
 class MorphologySampler:
     """Own configuration/distributions for one task; FITS data load on first draw."""
 
-    match_input_paramters = staticmethod(_legacy.match_input_paramters)
+    match_input_paramters = staticmethod(_empirical.match_input_paramters)
 
     def __init__(self, config):
         self.configure(config)

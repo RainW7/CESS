@@ -210,11 +210,11 @@ class SpectraMixin:
     def varsmooth(self, x, y, sig_x, xout=None, oversample=1):
         """Compatibility wrapper for independently defined Gaussian smoothing.
 
-        See ``cess.spectra.compat_smoothing.gaussian_sample_smooth`` for the
+        See ``cess.spectra.smoothing.gaussian_sample_smooth`` for the
         point-sample, column-array, finite-boundary and interpolation contract.
         This helper is not used by the production spectral-bin integrator.
         """
-        from cess.spectra.compat_smoothing import gaussian_sample_smooth
+        from cess.spectra.smoothing import gaussian_sample_smooth
         return gaussian_sample_smooth(x, y, sig_x, xout, oversample)
 
     def lamshift_width(self, flux, width, *, normalize=True):

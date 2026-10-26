@@ -5,11 +5,9 @@ import hashlib
 import json
 from pathlib import Path
 import tarfile
-
 import numpy as np
 import pytest
-
-from cess.io.legacy_writer import pad_spectral_rows
+from cess.io.science_writer import pad_spectral_rows
 from cess.pipeline.results import pad_results, emission_flags, desi_parameters
 
 ROOT = Path(__file__).resolve().parents[1]

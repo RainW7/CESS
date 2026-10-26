@@ -37,7 +37,7 @@ The confirmed nominal R=300 of the existing templates is provenance information;
 
 ## 3. Source morphology, PSF, and aperture
 
-The default one-dimensional morphology uses GEMS statistics and precomputed profile libraries. Distinguish original morphology parameters from the library parameters actually selected: nearest-grid selection is not continuous interpolation. PA is folded according to projection symmetry for the one-dimensional projection, while the original PA is retained. This folding cannot replace the directed PA or rotation sign required by a future two-dimensional velocity field.
+The default one-dimensional morphology uses GEMS statistics and precomputed profile libraries. Distinguish original morphology parameters from the library parameters actually selected: nearest-grid selection is not continuous interpolation. PA is folded according to projection symmetry for the one-dimensional projection, while the original PA is retained. This folding cannot replace the directed PA or rotation sign required by a two-dimensional velocity field.
 
 `spectral_extraction` provides three explicit conventions:
 
@@ -77,8 +77,6 @@ In standard mode, `/zero_order` contains passband-integrated photometry. The his
 
 The emission-line module distinguishes intrinsic peaks, noisy candidates, matches, false positives, and missed peaks. Window line fluxes and S/N use an affine sideband continuum and the current covariance model. A candidate peak is not automatically an identified atomic transition. Fixed windows may miss line wings or include neighboring lines; choosing centers from the same noisy data also introduces selection/centering bias. Window S/N is neither an independent detection significance nor an empirical certification of completeness or contamination.
 
-## 6. Release and research use
+## 6. Research use
 
-Version 0.9.0 delivers the one-dimensional program, reproducible parameter/resource identities, quality flags, and tool interfaces. Engineering regression, numerical conservation checks, and user runs of complete files provide different kinds of evidence. They do not replace calibration of PSF/LSF, response, background, aperture, sensitivity, or scientific selection functions. Record the software version, input SHA, effective configuration, random seed, and relevant field definitions in research applications.
-
-CESS+ zeroth-/first-order two-dimensional images, CCD scenes, contamination-aware extraction, and kinematic recovery are separate future stages; see the [roadmap](ROADMAP.md).
+Record the software version, input SHA, effective configuration, random seed, and relevant field definitions in research applications. Validate the PSF/LSF, response, background, aperture, sensitivity, and selection function for the intended study.

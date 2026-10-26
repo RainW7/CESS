@@ -24,7 +24,7 @@ cess --help
 安装本版后软件版本应为 `0.9.0`。已有环境直接激活，不要重复创建。
 不使用 Conda、从 wheel/sdist 安装或升级旧安装时，按[安装指南](INSTALL_zh-CN.md)操作。
 Conda 和 venv 任选一种；venv 不出现在 `conda env list` 中。
-本说明不要求 PyPI 上已经发布 CESS；源码与本地构件的在线发布状态以实际 GitHub release 为准。
+以上命令从下载的源码目录安装。
 
 ## 2. 用微型示例熟悉输出
 

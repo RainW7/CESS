@@ -2,10 +2,9 @@ import sys
 from pathlib import Path
 
 import pytest
-
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 sys.path.insert(0, str(CORE))
-from cess_config import load_config, validate_config
+from cess.config.loader import load_config, validate_config
 
 
 @pytest.mark.parametrize('key,value', [

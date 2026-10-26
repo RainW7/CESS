@@ -3,23 +3,25 @@ import json
 from pathlib import Path
 import subprocess
 import sys
-
 import numpy as np
 import pytest
 from astropy.io import fits
 
-CORE=Path(__file__).resolve().parents[1]/'CESS_v0.8.6'
+CORE=Path(__file__).resolve().parents[1]/'src'
 sys.path.insert(0,str(CORE))
 
 PREFIX='''
-import sys,importlib.abc,json,numpy as np
+import sys
+import importlib.abc
+import json
+import numpy as np
 sys.path.insert(0,sys.argv[1])
 class NoGalSim(importlib.abc.MetaPathFinder):
     def find_spec(self,fullname,path=None,target=None):
         if fullname=='galsim' or fullname.startswith('galsim.'):
             raise ModuleNotFoundError('blocked optional GalSim for test')
 if sys.argv[2]=='blocked':sys.meta_path.insert(0,NoGalSim())
-import morphology
+import cess.morphology.empirical as morphology
 assert 'galsim' not in sys.modules and 'galsim' not in morphology.__dict__
 '''
 
@@ -37,8 +39,8 @@ def test_import_sampling_lookup_and_rng_do_not_need_renderer(tmp_path):
     path=tmp_path/'gems.fits'
     fits.HDUList([fits.PrimaryHDU(),fits.BinTableHDU(data)]).writeto(str(path))
     code='''
-from cess_config import load_config
-configuration=load_config(sys.argv[1]+'/emulator_parameters.json')
+from cess.config.loader import load_config
+configuration=load_config(sys.argv[1]+'/cess/data/emulator_parameters.json')
 configuration['gems_path']=sys.argv[3]
 morphology.configure(configuration)
 np.random.seed(1729)
@@ -91,7 +93,7 @@ morphology.galsim=module
 
 def test_legacy_normal_renderer_matches_direct_original_draw_recipe():
     galsim=pytest.importorskip('galsim')
-    import morphology
+    import cess.morphology.empirical as morphology
     morphology.configure()
     configuration=morphology._ensure_config();pixel=configuration['arcsecperpix']
     galaxy=galsim.Sersic(1.,half_light_radius=pixel*4.).shear(q=1.,beta=0.*galsim.degrees)

@@ -107,8 +107,6 @@ The window size, divider positions, page size and the last opened file are store
 in `~/.config/cess-viewer/settings.json` (`$XDG_CONFIG_HOME` is honoured) and
 restored on the next start; delete that file to return to the defaults.
 
-
-
 | Page | Main use |
 | --- | --- |
 | Data browser | Browse the HDF5 hierarchy or filter paths; inspect shape, dtype, attributes and table-column definitions; preview, sort and export rows and select plotting variables |

@@ -5,7 +5,7 @@ import pytest
 from scipy.integrate import quad
 from scipy.special import ndtr
 
-from cess.spectra.compat_smoothing import gaussian_sample_smooth
+from cess.spectra.smoothing import gaussian_sample_smooth
 
 
 def test_gaussian_has_expected_broadening_and_amplitude():

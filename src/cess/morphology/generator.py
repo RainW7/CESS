@@ -17,7 +17,7 @@ import platform
 import sys
 import tempfile
 
-from cess.morphology.legacy_generator import _configuration, _project_module, validate_axes
+from cess.morphology.profile_generator import _configuration, _project_module, validate_axes
 from cess._version import __version__
 from cess.provenance import PACKAGE_ROOT
 
@@ -28,8 +28,8 @@ GENERATOR_REVISION = '20261023-v0.9.0.dev1-R1'
 AXIS_ORDER = ('n', 're_pixel', 'pa_deg', 'axis_ratio')
 AXIS_UNITS = dict(n='dimensionless', re_pixel='pixel', pa_deg='degree', axis_ratio='dimensionless')
 _SOURCES = ('morphology/generator.py', 'morphology/bundle.py', 'morphology/mge.py',
-            'morphology/reference.py', 'morphology/legacy_generator.py',
-            'morphology/legacy_bundle.py', 'spectra/numerics.py', 'spectra/__init__.py',
+            'morphology/reference.py', 'morphology/profile_generator.py',
+            'morphology/profile_bundle.py', 'spectra/numerics.py', 'spectra/__init__.py',
             'io/publish.py', 'config/loader.py',
             'provenance.py', 'resources.py', '_version.py', '__init__.py')
 
@@ -88,7 +88,7 @@ def plan_mge_library(config, axes, x_edges_pixel, y_edges_pixel=None, controls=N
     grid = validate_axes(axes)
     if any(not .5 <= n <= 5. for n in grid['n']):
         raise ValueError('Positive marginal library requires 0.5<=n<=5')
-    reference = _project_module('cess_reference')
+    reference = _project_module('cess.morphology.reference')
     x = reference._edges(x_edges_pixel, 'x_edges_pixel')
     y = x.copy() if y_edges_pixel is None else reference._edges(y_edges_pixel, 'y_edges_pixel')
     shape = [len(grid[name]) for name in AXIS_ORDER]
@@ -141,8 +141,8 @@ def _dataset(group, name, *, shape=None, data=None, dtype='float64', unit='1', o
 def _write_library(path, plan):
     import h5py
     import numpy as np
-    mge = _project_module('cess_mge')
-    _project_module('cess_reference')
+    mge = _project_module('cess.morphology.mge')
+    _project_module('cess.morphology.reference')
     count = plan['profile_count']
     nx, ny = len(plan['x_edges_pixel'])-1, len(plan['y_edges_pixel'])-1
     observed = {'profile_count': 0, 'fits_count': 0, 'minimum_probability': 1.,
@@ -214,8 +214,8 @@ def generate_mge_library(config, axes, x_edges_pixel, output, *, y_edges_pixel=N
         raise FileNotFoundError('Output parent must exist: '+str(destination.parent))
     plan = plan_mge_library(config,axes,x_edges_pixel,y_edges_pixel,controls)
     code = _source_hashes()
-    publisher = _project_module('cess_profile_publish')
-    verifier = _project_module('cess_mge_bundle')
+    publisher = _project_module('cess.io.publish')
+    verifier = _project_module('cess.morphology.bundle')
     staging = Path(tempfile.mkdtemp(prefix='.'+destination.name+'.staging-',dir=str(destination.parent)))
     try:
         observed = _write_library(staging/'marginals.hdf5',plan)

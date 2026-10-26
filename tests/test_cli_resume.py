@@ -9,18 +9,14 @@ import hashlib
 import json
 from pathlib import Path
 import sys
-
 import h5py
 import pytest
-
 from test_cli_repair import call_cli, fixture_files
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / 'CESS_v0.8.6'
+CORE = ROOT / 'src'
 sys.path.insert(0, str(CORE))
-import cess_cli
-
-
+import cess.cli.main as cess_cli
 def signature(path):
     return hashlib.sha256(path.read_bytes()).hexdigest(), path.stat().st_mtime_ns
 
@@ -137,7 +133,7 @@ def test_resume_rejects_input_config_and_interval_or_destination_drift(tmp_path,
 
 
 def test_manifest_persists_each_success_and_failure_before_next_job(tmp_path, monkeypatch, capsys):
-    import cess_manifest
+    import cess.io.manifest as cess_manifest
     _, config, _ = fixture_files(tmp_path, count=2)
     manifest = tmp_path / 'checkpoint.json'
     scheduled = {}

@@ -3,17 +3,13 @@ from pathlib import Path
 import pickle
 import random
 import sys
-
 import numpy as np
 import pytest
-
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 if str(CORE) not in sys.path:
     sys.path.insert(0, str(CORE))
 
-import morphology
-
-
+import cess.morphology.empirical as morphology
 def test_fold_scalar_array_boundaries_and_no_input_mutation():
     angles = np.asarray([[-360., -270., -180., -100., -90.],
                          [-60., -30., 0., 30., 60.],
@@ -108,7 +104,7 @@ def test_existing_profile_libraries_use_positive_mirror_and_preserve_positive_lo
     indices = (5, 5, 6, 1)
     changed_profiles = 0
     for kind in ('width', 'height'):
-        with (CORE / 'basic_file' / (kind + 'lib_20x20x10x10.pkl')).open('rb') as stream:
+        with (CORE / 'cess/data/basic_file' / (kind + 'lib_20x20x10x10.pkl')).open('rb') as stream:
             library = pickle.load(stream)
         nidx, reidx, paidx, baidx = indices
         args = (library, nseries[nidx], reseries[reidx], -60., baseries[baidx],

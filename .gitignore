@@ -44,3 +44,7 @@ __pycache__/
 /docs/input_quality_20261024/
 
 /docs/cli_usability_20261024/
+
+# Superseded source and compatibility resources retained only on this machine.
+/archive/
+/CESS_v0.8.6/

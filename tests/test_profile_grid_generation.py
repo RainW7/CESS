@@ -4,14 +4,10 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-
 import numpy as np
 import pytest
-
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'CESS_v0.8.6'))
-import morphology
-
-
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
+import cess.morphology.empirical as morphology
 @pytest.fixture(autouse=True)
 def quiet_progress(monkeypatch):
     monkeypatch.setattr(morphology,'tqdm',lambda values:values)
@@ -118,9 +114,9 @@ def test_rendering_failure_names_grid_location_and_preserves_cause(monkeypatch):
 
 
 def test_two_real_equal_length_profiles_in_fresh_process(tmp_path):
-    core=Path(__file__).resolve().parents[1]/'CESS_v0.8.6'
+    core=Path(__file__).resolve().parents[1]/'src'
     code=('import sys,numpy as np;sys.path.insert(0,{!r});'
-          'import morphology;from cess_config import load_config;'
+          'import cess.morphology.empirical as morphology;from cess.config.loader import load_config;'
           'morphology.configure(load_config());'
           'a,b=morphology.create_lib([1.],[4.],[0.,90.],[1.]);'
           'assert a.shape==b.shape==(1,1,2,1);'

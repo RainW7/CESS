@@ -4,7 +4,6 @@ import importlib.util
 import os
 from pathlib import Path
 import sys
-
 import numpy as np
 import pytest
 from astropy import units as u
@@ -13,7 +12,7 @@ from astropy.table import QTable
 
 @pytest.fixture(scope='module')
 def core():
-    directory = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+    directory = Path(__file__).resolve().parents[1] / 'src'
     package_root = directory.parent / 'src'
     if str(package_root) not in sys.path:
         sys.path.insert(0, str(package_root))

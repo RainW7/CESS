@@ -17,10 +17,7 @@ import subprocess
 import sys
 import types
 import zipfile
-
 import pytest
-
-
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / 'src'
 sys.path.insert(0, str(SRC))
@@ -28,7 +25,7 @@ from cess import __version__ as PACKAGE_VERSION
 
 ENTRYPOINTS = {
     'cess': 'cess.cli.main:main',
-    'cess-profile-library': 'cess.morphology.legacy_generator:main',
+    'cess-profile-library': 'cess.morphology.profile_generator:main',
     'cess-mge-library': 'cess.morphology.generator:main',
     'cess-extract': 'cess.io.sampling:cli_main',
     'cess-viewer': 'cess.viewer:main',
@@ -55,7 +52,10 @@ def process(arguments, cwd, pythonpath):
 
 def test_light_package_imports_do_not_load_resources_or_science(tmp_path):
     code = '''
-import builtins, importlib.abc, pathlib, sys
+import builtins
+import importlib.abc
+import pathlib
+import sys
 class BlockScience(importlib.abc.MetaPathFinder):
  def find_spec(self, fullname, path=None, target=None):
   if fullname.split('.')[0] in {'numpy','scipy','h5py','astropy','galsim','pandas','matplotlib','photutils','specutils','tqdm'}:
@@ -64,8 +64,13 @@ sys.meta_path.insert(0,BlockScience())
 def forbidden(*args,**kwargs):raise AssertionError('resource/source content read at import')
 builtins.open=forbidden
 pathlib.Path.open=forbidden
-import cess, cess.__main__, cess.resources, cess.provenance
-import cess.config.loader, cess.morphology.legacy_generator, cess.morphology.generator
+import cess
+import cess.__main__
+import cess.resources
+import cess.provenance
+import cess.config.loader
+import cess.morphology.profile_generator
+import cess.morphology.generator
 assert cess.__version__==EXPECTED_VERSION
 assert not any(name in sys.modules for name in ['numpy','scipy','galsim','h5py'])
 print('light imports passed')
@@ -79,8 +84,11 @@ def test_exact_packaged_default_resource_closure():
     assert len(calibration_files()) == len(set(CALIBRATION_PATHS)) == 17
     expected = set(CALIBRATION_PATHS) | {'emulator_parameters.json'}
     assert {str(path.relative_to(DATA_ROOT)) for path in DATA_ROOT.rglob('*') if path.is_file()} == expected
+    inventory = json.loads((ROOT / 'docs/RESOURCE_MANIFEST.json').read_text())['files']
+    assert set(inventory) == expected
     for name in sorted(expected):
-        assert digest(DATA_ROOT / name) == digest(ROOT / 'CESS_v0.8.6' / name)
+        assert digest(DATA_ROOT / name) == inventory[name]['sha256']
+        assert (DATA_ROOT / name).stat().st_size == inventory[name]['bytes']
 
 
 def test_direct_requirement_profiles_match_package_metadata():
@@ -169,31 +177,25 @@ def test_actual_source_closure_includes_nested_modules_and_initializers():
     assert found == {path.resolve() for path in PACKAGE_ROOT.rglob('*.py') if path.is_file()}
     assert {PACKAGE_ROOT / '__init__.py', PACKAGE_ROOT / '__main__.py',
             PACKAGE_ROOT / 'config/loader.py', PACKAGE_ROOT / 'pipeline/support.py'} <= found
-    assert all('CESS_v0.8.6' not in path.parts for path in found)
+    assert all(path.is_relative_to(PACKAGE_ROOT) for path in found)
 
 
-def test_generator_module_binding_ignores_old_name_cache(monkeypatch):
-    from cess.morphology.legacy_generator import _project_module
-    from cess.morphology import reference
-    monkeypatch.setitem(sys.modules, 'cess_reference', types.ModuleType('cess_reference'))
-    assert _project_module('cess_reference') is reference
-    assert _project_module('cess.morphology.reference') is reference
 
 
 def test_generator_rejects_foreign_cached_canonical_module(monkeypatch, tmp_path):
-    from cess.morphology.legacy_generator import _project_module
+    from cess.morphology.profile_generator import _project_module
     fake = types.ModuleType('cess.morphology.reference')
     fake.__file__ = str(tmp_path / 'reference.py')
     monkeypatch.setitem(sys.modules, 'cess.morphology.reference', fake)
     with pytest.raises(RuntimeError, match='Expected package module'):
-        _project_module('cess_reference')
+        _project_module('cess.morphology.reference')
 
 
 def test_generator_plans_and_source_binding_use_real_package_files():
     from cess.config.loader import DEFAULT_CONFIG_PATH
-    from cess.morphology import generator, legacy_generator
+    from cess.morphology import generator, profile_generator
     axes = dict(n=[.5], re_pixel=[4.], pa_deg=[0.], axis_ratio=[1.])
-    old_plan = legacy_generator.plan_generation(DEFAULT_CONFIG_PATH, axes)
+    old_plan = profile_generator.plan_generation(DEFAULT_CONFIG_PATH, axes)
     new_plan = generator.plan_mge_library(DEFAULT_CONFIG_PATH, axes, [-1., 0., 1.])
     assert old_plan['schema'] == 'cess.generated_profile_library'
     assert new_plan['schema'] == 'cess.positive_marginal_library'
@@ -201,7 +203,7 @@ def test_generator_plans_and_source_binding_use_real_package_files():
         assert plan['generator_revision'] == '20261023-v0.9.0.dev1-R1'
         assert plan['software_version'] == PACKAGE_VERSION
         assert 'relative to the cess package' in plan['generator_source_layout']
-    for module in (generator, legacy_generator):
+    for module in (generator, profile_generator):
         assert all((module.PROJECT / name).is_file() for name in module._SOURCES)
         assert 'config/loader.py' in module._SOURCES
         assert all(not name.startswith('cess_') for name in module._SOURCES)
@@ -220,7 +222,7 @@ def test_tiny_mge_library_publishes_canonical_source_snapshot(tmp_path):
     assert verify_mge_bundle(path)['schema'] == 'cess.positive_marginal_library'
 
 
-@pytest.mark.parametrize('module', ['cess', 'cess.morphology.legacy_generator', 'cess.morphology.generator'])
+@pytest.mark.parametrize('module', ['cess', 'cess.morphology.profile_generator', 'cess.morphology.generator'])
 def test_module_cli_help_from_foreign_directory(tmp_path, module):
     assert 'usage:' in process([sys.executable, '-s', '-B', '-m', module, '--help'], tmp_path, SRC)
 
@@ -300,7 +302,8 @@ def test_offline_wheel_target_install_and_cli(built_wheel):
             folder, folder)
     code = '''
 from pathlib import Path
-import sys, cess
+import sys
+import cess
 from cess.config.loader import load_config
 from cess.provenance import source_files
 assert cess.__version__==EXPECTED_VERSION

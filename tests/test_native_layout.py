@@ -50,7 +50,7 @@ def test_native_default_preserves_legacy_datasets(tmp_path, mode, count, invalid
     source = tmp_path / 'template.hdf5'
     make_input(source, count=count, invalid=invalid)
     driver = importlib.import_module('cess.pipeline.' + mode)
-    config = load_config(ROOT / 'CESS_v0.8.6/emulator_parameters.json')
+    config = load_config(ROOT / 'src/cess/data/emulator_parameters.json')
     options = dict(morph=True, wave_cal=True, photo=True, el_detect=True)
     old = driver.task(str(tmp_path), source.name, config=config, options=options,
                       seed=1214, output_dir=str(tmp_path / 'old'))
@@ -67,7 +67,7 @@ def test_native_default_preserves_legacy_datasets(tmp_path, mode, count, invalid
 def test_emission_subselection_accepts_structured_parent(tmp_path, mode):
     source = tmp_path / 'template.hdf5'
     make_input(source, count=4, invalid=(0,))
-    config = load_config(ROOT / 'CESS_v0.8.6/emulator_parameters.json')
+    config = load_config(ROOT / 'src/cess/data/emulator_parameters.json')
     simulation = importlib.import_module('cess.pipeline.' + mode)
     from cess.pipeline.emission import simulate_file
     parent = Path(simulation.simulate_file(str(tmp_path), source.name, config=config,

@@ -7,21 +7,20 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-
 import h5py
 import numpy as np
 from scipy.integrate import trapezoid
 import pytest
 from astropy.io import fits
 
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 
 
 def _module(name, filename):
     # File-spec tests deliberately create isolated state. Legacy entry files now
     # alias canonical modules; execute the owning source for this private probe.
     targets = {'cess_config.py': 'config/loader.py', 'main.py': 'engine.py',
-               'morphology.py': 'morphology/legacy.py'}
+               'morphology.py': 'morphology/empirical.py'}
     package_root = CORE.parent / 'src'
     if str(package_root) not in sys.path:
         sys.path.insert(0, str(package_root))
@@ -55,13 +54,13 @@ def test_imports_without_configuration_or_fits_from_arbitrary_cwd(tmp_path):
 import sys
 sys.path.insert(0, sys.argv[1])
 from astropy.io import fits
-import cess_config
+import cess.config.loader as cess_config
 def forbidden(*args, **kwargs):
     raise AssertionError('import attempted configuration/calibration I/O')
 cess_config.load_config = forbidden
 fits.open = forbidden
-import main
-import morphology
+import cess.engine as main
+import cess.morphology.empirical as morphology
 assert 'radi' not in main.__dict__
 assert morphology._config is None and morphology._gems_data is None
 print('no configuration/calibration I/O')

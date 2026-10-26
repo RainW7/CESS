@@ -1,11 +1,8 @@
-"""Public emulator facade composed from the retained C13 method blocks.
+"""Public CSST emulator composed from spectral, detector and line services.
 
-Construction loads an independently validated configuration. Import itself does
-not load configuration, catalogues, profile libraries or the optional renderer.
-For dependency monkeypatches use the service module that owns the method; the
-public class and instance method hooks remain shared across compatibility entry
-points. Numerical methods live in spectra.operator, instrument.detector and
-lines.detection; none imports this composition module.
+Construction validates an independent configuration. Import loads no catalogue,
+profile library or optional renderer. Numerical implementations live in
+spectra.operator, instrument.detector and lines.detection.
 """
 import os
 import h5py

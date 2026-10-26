@@ -2,7 +2,7 @@
 
 [English](USER_GUIDE.md) | [简体中文](USER_GUIDE_zh-CN.md)
 
-用户指南，2026-10-26。适用于 CESS `0.9.0`，revision `20261024-D4`。发布范围与状态见[发布清单](RELEASE_CHECKLIST_v0.9.0_zh-CN.md)。本文根据实际 CLI、配置加载器、产品 reader 和公开示例整理。
+用户指南，2026-10-26。适用于 CESS `0.9.0`，revision `20261024-D4`。
 
 软件定位、功能总览和版本变化见[中文README](../README_zh-CN.md)。本页按实际操作顺序展开。
 首次使用命令行，先阅读[Bash 命令手册](COMMANDS_zh-CN.md)：其中逐项解释路径、引号、换行、并行、日志和续跑。只需要最短入口时可先看[快速上手](QUICKSTART_zh-CN.md)。
@@ -20,9 +20,7 @@
 
 CESS 把已有 BayeSED 星系模板库和仪器配置转换为 GU/GV/GI 一维无缝光谱。它计算光谱响应、电子期望和观测噪声，输出标称流量、误差、S/N、掩膜及来源记录；可以另外启用形态影响、波长定标误差、七波段测光和发射线检测。源形态还使用配置指定的 GEMS/形态库等资源，单独一个 SED 文件不足以替代完整运行配置。
 
-现代 `cess` / `python -m cess` 默认写分组式 HDF5 schema 3.0；`--output-layout legacy` 写兼容 schema 2.5。软件版本、修复 revision 和文件 schema 是不同编号，不能用其中一个推断另两个。旧脚本作为脚本执行及旧 `task(...)` 默认保留2.5；新用户优先使用现代 CLI，避免混合入口造成布局误判。
-
-本指南处理一维软件接口。二维图像、CCD场景、污染提取及旋转曲线恢复属于后续 CESS+ 范围。代码回归、安装示例和小样本数值对照各有验收范围，不能据此声明真实 CSST PSF、背景、灵敏度、完备度或运动学恢复已经定标。
+现代 `cess` / `python -m cess` 默认写分组式 HDF5 schema 3.0；`--output-layout legacy` 写兼容 schema 2.5。软件版本、修复 revision 和文件 schema 是不同编号，不能用其中一个推断另两个。
 
 ## 2. 创建 cess 环境、安装及运行
 
@@ -389,8 +387,7 @@ env PYTHONPATH="$REPO/src" "$PY" -s -B -m cess.cli.demo \
   "$CESS_GUIDE_RUN/spectra/CSST_grism_toy_4.hdf5" 1 emissionline \
   --model-input "$CESS_GUIDE_RUN/toy.hdf5" --save "$CESS_GUIDE_RUN/spectrum.png"
 
-# 源码兼容入口；安装用户可改用 cess-extract。
-env PYTHONPATH="$REPO/src" "$PY" -s -B "$REPO/extract_mock_spectra_ds.py" \
+cess-extract \
   /absolute/simulation.hdf5 --output /absolute/new_sample.hdf5 \
   --target 100 --n-bins 10 --seed 1214
 ```
@@ -430,8 +427,8 @@ paired-wce的光谱页显示基础分支，`*_wce` 可在结构或X-Y页查看�
 
 请按[一维科学模型说明](SCIENCE_MODELS_zh-CN.md)、[MGE形态模型指南](MGE_MODELS_zh-CN.md)和[MGE库格式](MGE_BUNDLE_FORMAT.md)理解并合入完整配置。示例空间像元、核半宽及 `pre_psf` 都是待核验假设，不能直接认作CSST定标值。库像元尺度、PSF声明及配置必须一致，也不能混用旧pickle bundle与正值库格式。
 
-Gravity交付见[scripts/gravity/README.md](../scripts/gravity/README_zh-CN.md)，使用现有 `preflight.sh` 和 `cess.pbs`。脚本要求绝对路径、版本身份、受限worker与线程、独立日志及显式resume；新任务预检省略manifest以免生成清单。PBS flavour、队列和CPU/内存语法须在真实服务器确认，用户自行qsub。当前本地toy脚本验证不等于服务器环境、资源或全量运行已验收。
+Gravity交付见[scripts/gravity/README.md](../scripts/gravity/README_zh-CN.md)，使用现有 `preflight.sh` 和 `cess.pbs`。脚本要求绝对路径、版本身份、受限worker与线程、独立日志及显式resume；新任务预检省略manifest以免生成清单。PBS flavour、队列和CPU/内存语法须在真实服务器确认，用户自行qsub。
 
-源码和文档采用[MIT许可](../LICENSE)，随包资源范围和来源见[资源说明](../RESOURCE_NOTICE_zh-CN.md)及[资源清单](RESOURCE_MANIFEST.json)。发布构件和范围见[发布清单](RELEASE_CHECKLIST_v0.9.0_zh-CN.md)；科学定标与后续CESS+另有范围。详细开发验收记录单独保留，不是本用户指南的安装前置条件。
+源码和文档采用[MIT许可](../LICENSE)，随包资源范围和来源见[资源说明](../RESOURCE_NOTICE_zh-CN.md)及[资源清单](RESOURCE_MANIFEST.json)。
 
 常用快捷命令见[快速上手](QUICKSTART_zh-CN.md)，Bash语法与逐项操作见[命令手册](COMMANDS_zh-CN.md)：`-i/-o/-j`分别等价`--input/--output/--workers`；`simulate --all-effects`同时启用四开关，原默认不变。

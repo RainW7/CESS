@@ -8,21 +8,17 @@ from pathlib import Path
 import pickle
 import subprocess
 import sys
-
 import numpy as np
 import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
-CODE = ROOT / 'CESS_v0.8.6'
+CODE = ROOT / 'src'
 sys.path.insert(0, str(CODE))
-import cess_profile_generator as generator
-from cess_config import load_config
-import morphology
-
-
+import cess.morphology.profile_generator as generator
+from cess.config.loader import load_config
+import cess.morphology.empirical as morphology
 @pytest.fixture
 def config():
-    return load_config(CODE / 'emulator_parameters.json')
+    return load_config(CODE / 'cess/data/emulator_parameters.json')
 
 
 @pytest.fixture
@@ -72,13 +68,13 @@ def test_legacy_grid_scale_conversion_is_explicit():
 
 
 def test_import_and_help_do_not_render_or_read_config(tmp_path):
-    entry = CODE / 'basic_file/create_lib.py'
+    entry = CODE / 'cess/morphology/profile_generator.py'
     spec = importlib.util.spec_from_file_location('safe_profile_entry', str(entry))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert callable(module.main)
     (tmp_path / 'morphology.py').write_text("raise RuntimeError('foreign cwd module')\n")
-    env = dict(os.environ, CESS_CONFIG='/nonexistent/config.json', PYTHONDONTWRITEBYTECODE='1')
+    env = dict(os.environ, CESS_CONFIG='/nonexistent/config.json', PYTHONDONTWRITEBYTECODE='1', PYTHONPATH=str(CODE))
     before = set(tmp_path.iterdir())
     result = subprocess.run([sys.executable, '-B', str(entry), '--help'], cwd=str(tmp_path),
                             env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -91,15 +87,15 @@ def test_foreign_cwd_dry_run_and_config_snapshot(tmp_path, axes):
     grid = tmp_path / 'grid.json'
     grid.write_text(json.dumps(axes))
     output = tmp_path / 'never_created'
-    result = subprocess.run([sys.executable, '-B', str(CODE / 'basic_file/create_lib.py'),
-                             '--config', str(CODE / 'emulator_parameters.json'),
+    result = subprocess.run([sys.executable, '-B', '-m', 'cess.morphology.profile_generator',
+                             '--config', str(CODE / 'cess/data/emulator_parameters.json'),
                              '--grid', str(grid), '--output', str(output), '--dry-run'],
                             cwd=str(tmp_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             universal_newlines=True)
     assert result.returncode == 0, result.stderr
     plan = json.loads(result.stdout)
     assert plan['shape'] == [1, 1, 2, 1]
-    assert plan['config_source']['sha256'] == hashlib.sha256((CODE / 'emulator_parameters.json').read_bytes()).hexdigest()
+    assert plan['config_source']['sha256'] == hashlib.sha256((CODE / 'cess/data/emulator_parameters.json').read_bytes()).hexdigest()
     assert not output.exists()
 
 
@@ -183,7 +179,7 @@ def test_write_failure_retains_unpublished_staging(tmp_path, config, axes, monke
 
 
 def test_publication_race_preserves_competing_directory(tmp_path, config, axes, monkeypatch):
-    import cess_profile_publish
+    import cess.io.publish as cess_profile_publish
     monkeypatch.setattr(morphology, 'create_lib', lambda *args: _fake_arrays())
     publish = cess_profile_publish.publish_directory
     def race(staging, output):
@@ -199,7 +195,7 @@ def test_publication_race_preserves_competing_directory(tmp_path, config, axes, 
 
 
 def test_replaced_staging_is_never_recursively_deleted(tmp_path, config, axes, monkeypatch):
-    import cess_profile_publish
+    import cess.io.publish as cess_profile_publish
     monkeypatch.setattr(morphology, 'create_lib', lambda *args: _fake_arrays())
     original = tmp_path / 'original-stage'
     def replace_then_fail(staging, output):

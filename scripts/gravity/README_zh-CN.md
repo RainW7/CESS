@@ -1,7 +1,7 @@
 # Gravity / PBS 使用说明
 
 [English](README.md) | [简体中文](README_zh-CN.md)
-本目录只交付一维计算脚本；尚未登录 Gravity、安装 Linux 环境、提交作业或验证本站 PBS。当前预检身份为 `0.9.0 / 20261024-D4`；部署时须使用相同版本源码并重新预检。Mac 的 `.envs/cess` 和 ARM64 lock 不能直接移作 Linux 环境。
+这些脚本用于在PBS计算节点运行CESS。预检要求 `0.9.0 / 20261024-D4`；请在Linux的Python3.12环境部署相同源码版本，提交作业前先运行预检。
 
 `preflight.sh` 只读检查 Python 3.12、导入源码位置、版本/revision、配置及资源文件是否可读，再调用实际 CLI dry-run；不检验仪器科学模型，也不证明所有输入行均有效。`cess.pbs` 才执行模拟，首次运行创建新 manifest，失败保留日志及续跑清单，直接返回失败状态。输出已有产品时 CLI 拒绝覆盖。
 
@@ -79,5 +79,3 @@ qsub -V "$CESS_REPO/scripts/gravity/cess.pbs"
 `-V` 是用户显式选择导出当前环境；本站若禁止或希望只传指定变量，应按本站方式导出上述 CESS 变量。脚本不自动调用 qsub。默认日志位于 manifest父目录的 `logs/`，也可设绝对 `CESS_LOG_DIR`；每次生成独立日志，PBS输出首先显示路径。CPU、内存和 walltime 仍由站点调度器约束，本草案没有声称服务器可运行或获得特定资源。
 
 续跑前确认旧进程已停止，保留原 input/config/resources/source/seed/模式/开关/区间/chunk/output/manifest；只设 `CESS_RESUME=1`，先重跑 preflight dry-run，再由用户 qsub。此预览对既有 manifest走严格只读核验。跨代码/资源/schema身份不可续用旧清单；选择全新任务位置。不要同时提交两个使用同一 manifest 的作业。
-
-本地验证仅使用临时toy输入和本地Bash执行，不代表本站PBS调度验收；具体工程记录单独保存。修改版本或脚本后须重新预检，不跨版本沿用旧manifest。

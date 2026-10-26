@@ -5,17 +5,14 @@ from pathlib import Path
 import pickle
 import sys
 import warnings
-
 import numpy as np
 import pytest
 from scipy.special import ndtr
 
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 if str(CORE) not in sys.path:
     sys.path.insert(0, str(CORE))
-import cess_oracle as oracle
-
-
+import cess.morphology.oracle as oracle
 def call(n=1., radius=4., angle=0., q=1., lower=-.5, upper=.5, axis='x', **kwargs):
     return oracle.sersic_bin_oracle(n, radius, angle, q, .2625, .074,
                                      lower, upper, axis, **kwargs)
@@ -42,7 +39,7 @@ def test_gaussian_old_failures_match_analytic_full_source(radius, angle, q, axis
 
 
 def test_exponential_old_failure_matches_independent_special_api():
-    from cess_reference import sersic_pixel_reference
+    from cess.morphology.reference import sersic_pixel_reference
     result=call(1.,20.,90.,.1)
     independent=sersic_pixel_reference(1.,20.,90.,.1,.2625,.074,[-.5,.5])
     assert result['probability']==pytest.approx(float(independent['x_probability'][0]),abs=2.e-10)

@@ -3,7 +3,6 @@
 [English](COMMANDS.md) | [简体中文](COMMANDS_zh-CN.md)
 
 本手册面向第一次使用 CESS 命令行的用户。适用于 macOS/Linux 的 Bash；常见单行命令也适用于 zsh。
-软件目前准备 v0.9.0 本地发布候选构件，GitHub 发布状态见[发布清单](RELEASE_CHECKLIST_v0.9.0_zh-CN.md)。
 科学量、输入 HDF5 字段和模型近似见[用户指南](USER_GUIDE_zh-CN.md)；这里只解释如何组织和运行命令。
 
 ## 1. 最常用的三种运行方式
@@ -479,7 +478,7 @@ bash "$CESS_REPO/scripts/gravity/preflight.sh" --dry-run
 `CESS_CPUS=4` 本身不会申请或自动认证实际分配了4个CPU。
 
 PBS flavour、队列、内存与walltime语法必须以本站为准；完成资源头和预检后，由用户按本站方式提交。
-本地脚本执行验收不等于Gravity调度验收。一个CESS进程池只在同一主机运行，没有MPI多节点分发；
+一个CESS进程池只在同一主机运行，没有MPI多节点分发；
 多节点生产可划分为独立批次作业，各用自己的输出目录和manifest。
 
 ### 可选桌面浏览器

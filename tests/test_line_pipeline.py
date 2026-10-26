@@ -2,22 +2,20 @@
 import importlib
 from pathlib import Path
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / 'CESS_v0.8.6'
+CORE = ROOT / 'src'
 sys.path[:0] = [str(CORE), str(ROOT)]
 
-from cess_config import load_config
-from cess_lines import measure_line_window
-from main import emulator
+from cess.config.loader import load_config
+from cess.lines.measurement import measure_line_window
+from cess.engine import emulator
 from test_pipeline_smoke import make_input
 
 
-def simulation(tmp_path, module='run', count=2, invalid=(0,), wave_error=False):
+def simulation(tmp_path, module='cess.pipeline.standard', count=2, invalid=(0,), wave_error=False):
     inputs = tmp_path / 'input'
     inputs.mkdir()
     source = inputs / 'synthetic.hdf5'
@@ -27,7 +25,7 @@ def simulation(tmp_path, module='run', count=2, invalid=(0,), wave_error=False):
     with h5py.File(str(source), 'r+') as handle:
         values = handle['best_fit/spec_synthetic'][:]
         handle['best_fit/spec_synthetic'][:] = 1. + (values - 1.) * 20.
-    config = load_config(CORE / 'emulator_parameters.json')
+    config = load_config(CORE / 'cess/data/emulator_parameters.json')
     config['output_path'] = str(tmp_path / 'output')
     config['line_measurement'] = dict(line_width_pixels=dict(GV=10, GI=10),
         sideband_width_pixels=5, sideband_gap_pixels=3)
@@ -109,7 +107,7 @@ def test_paired_wce_covariance_variants_and_el_only_subset(tmp_path, monkeypatch
     # A controlled half-pixel registration supplies a nonzero covariance and
     # exercises independent WCE peak detection without relying on a random draw.
     monkeypatch.setattr(emulator, '_sample_wave_offset', staticmethod(lambda rng=None: .5))
-    path, config = simulation(tmp_path, module='run_gravity_zouhu', wave_error=True)
+    path, config = simulation(tmp_path, module='cess.pipeline.paired', wave_error=True)
     with h5py.File(str(path), 'r') as parent:
         for band in ('GU', 'GV', 'GI'):
             group = parent[band]
@@ -139,7 +137,7 @@ def test_paired_wce_covariance_variants_and_el_only_subset(tmp_path, monkeypatch
                 assert group['line_measurements'].attrs['variant'] == 'unregistered'
                 assert group['line_measurements_wce'].attrs['variant'] == 'registered_wce'
 
-    import run_el_detect
+    import cess.pipeline.emission as run_el_detect
     derived = run_el_detect.task(str(path.parent), path.name, output_dir=tmp_path / 'el',
         config=config, seed=1214, source_start=1, source_stop=2)
     with h5py.File(str(path), 'r') as parent, h5py.File(str(derived), 'r') as output:
@@ -161,7 +159,7 @@ def test_paired_wce_covariance_variants_and_el_only_subset(tmp_path, monkeypatch
 
 
 def test_old_parent_missing_uncertainties_keeps_peak_rows_flagged_unknown(tmp_path):
-    import run_el_detect
+    import cess.pipeline.emission as run_el_detect
     source = tmp_path / 'legacy.hdf5'
     with h5py.File(str(source), 'w') as parent:
         parent['ID'] = np.array([b'invalid', b'legacy'])
@@ -179,7 +177,7 @@ def test_old_parent_missing_uncertainties_keeps_peak_rows_flagged_unknown(tmp_pa
                 group['ferr'] = np.ones_like(flux)
                 group['flux_ujy_with_noise_wce'] = flux
                 group['ferr_wce'] = np.ones_like(flux)
-    config = load_config(CORE / 'emulator_parameters.json')
+    config = load_config(CORE / 'cess/data/emulator_parameters.json')
     output_path = run_el_detect.task(str(tmp_path), source.name, output_dir=tmp_path / 'el',
         config=config, source_start=1, source_stop=2)
     with h5py.File(str(output_path), 'r') as output:

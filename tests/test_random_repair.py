@@ -2,13 +2,11 @@ import importlib.util
 from pathlib import Path
 import random
 import sys
-
 import numpy as np
 import pytest
-
-CORE = Path(__file__).resolve().parents[1] / "CESS_v0.8.6"
+CORE = Path(__file__).resolve().parents[1] / "src"
 sys.path.insert(0, str(CORE))
-from cess_random import file_identity, legacy_rng, source_rng, source_seed
+from cess.pipeline.random import file_identity, legacy_rng, source_rng, source_seed
 
 
 def test_source_stream_is_order_and_component_independent():

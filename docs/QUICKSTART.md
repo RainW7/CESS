@@ -25,8 +25,7 @@ cess --help
 The version should be `0.9.0`. Activate an existing suitable environment rather
 than creating it again. For venv, wheel/sdist installation or upgrading, see
 [installation](INSTALL.md). Choose Conda or venv; a venv does not appear in
-`conda env list`. These steps do not assume that CESS is published on PyPI;
-consult the actual GitHub release for online availability.
+`conda env list`. The commands install from the downloaded source tree.
 
 ## 2. Explore a tiny example
 

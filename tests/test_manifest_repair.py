@@ -4,16 +4,14 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 sys.path.insert(0, str(CORE))
-import cess_manifest as manifest
-from cess_config import load_config
-from runner_support import (SourceSelection, record_runner_provenance, write_spectral_covariance,
+import cess.io.manifest as manifest
+from cess.config.loader import load_config
+from cess.pipeline.support import (SourceSelection, record_runner_provenance, write_spectral_covariance,
                             LINE_MEASUREMENT_DTYPE, COVARIANCE_MODEL, write_el_details,
                             write_line_measurements, write_spectral_extraction, SCHEMA_VERSION)
 
@@ -182,8 +180,8 @@ def populated_product(tmp_path, mode='paired-wce', legacy_parent=False):
     """Use actual EL match/writers, retaining nonordinal original peak IDs."""
     from astropy import units as u
     from astropy.table import QTable
-    from main import emulator
-    from cess_spectral import bin_edges
+    from cess.engine import emulator
+    from cess.spectra.integration import bin_edges
     job, _ = fixture_job(tmp_path, mode)
     job['options']['el_detect'] = True
     for band in ('gv', 'gi'):
@@ -631,7 +629,7 @@ def test_atomic_initial_write_no_clobber_replace_and_failed_serialization(tmp_pa
 def test_lock_nonblocking_competition_and_release_after_abrupt_exit(tmp_path):
     path = tmp_path / 'manifest.json'
     environment = dict(os.environ, PYTHONPATH=str(CORE), PYTHONDONTWRITEBYTECODE='1')
-    code = ('from cess_manifest import manifest_lock; import os; '
+    code = ('from cess.io.manifest import manifest_lock; import os; '
             'lock=manifest_lock({!r}); lock.__enter__(); os._exit(0)').format(str(path))
     with manifest.manifest_lock(path) as lock_path:
         with pytest.raises(ValueError, match='locked'):

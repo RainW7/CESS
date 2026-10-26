@@ -3,8 +3,6 @@
 [English](USER_GUIDE.md) | [简体中文](USER_GUIDE_zh-CN.md)
 
 Updated 2026-10-26. This guide applies to CESS `0.9.0`, revision `20261024-D4`.
-See the [release checklist](RELEASE_CHECKLIST_v0.9.0.md) for release scope and status.
-The instructions follow the implemented CLI, configuration loader, product reader, and public examples.
 
 The [README](../README.md) describes the software, capabilities, and version changes. This guide follows the order of a typical workflow.
 If you are new to the command line, start with the [Bash command guide](COMMANDS.md), which explains paths, quoting,
@@ -29,12 +27,7 @@ an SED file alone does not replace a complete runtime configuration.
 
 The modern `cess` / `python -m cess` entry point writes structured HDF5 schema 3.0 by default.
 `--output-layout legacy` writes compatible schema 2.5. Package version, repair revision, and file schema are separate identifiers;
-one cannot be inferred from another. Legacy scripts executed as scripts and legacy `task(...)` calls retain the 2.5 default.
-New users should use the modern CLI to avoid mixing entry points with different layout defaults.
-
-This guide covers the 1D software interface. Two-dimensional images, CCD scenes, contamination extraction, and rotation-curve
-recovery belong to future CESS+ work. Code regression, installation examples, and small numerical comparisons each have a
-limited validation scope; they do not establish calibrated CSST PSF, background, sensitivity, completeness, or kinematic recovery.
+one cannot be inferred from another.
 
 ## 2. Create a cess environment, install, and run
 
@@ -506,8 +499,7 @@ env PYTHONPATH="$REPO/src" "$PY" -s -B -m cess.cli.demo \
   "$CESS_GUIDE_RUN/spectra/CSST_grism_toy_4.hdf5" 1 emissionline \
   --model-input "$CESS_GUIDE_RUN/toy.hdf5" --save "$CESS_GUIDE_RUN/spectrum.png"
 
-# Source compatibility entry point; installed users can use cess-extract instead.
-env PYTHONPATH="$REPO/src" "$PY" -s -B "$REPO/extract_mock_spectra_ds.py" \
+cess-extract \
   /absolute/simulation.hdf5 --output /absolute/new_sample.hdf5 \
   --target 100 --n-bins 10 --seed 1214
 ```
@@ -567,8 +559,6 @@ and the user submits `qsub`. Local toy-payload verification does not establish s
 
 Source and documentation use the [MIT license](../LICENSE). Bundled resources and provenance are described in the
 [resource notice](../RESOURCE_NOTICE.md) and [resource inventory](RESOURCE_MANIFEST.json).
-See the [release checklist](RELEASE_CHECKLIST_v0.9.0.md) for artifacts and scope.
-Scientific calibration and later CESS+ development have separate scopes. Detailed development evidence is retained separately and is not an installation prerequisite.
 
 For short commands see the [quick start](QUICKSTART.md); for Bash syntax and step-by-step commands see the [command guide](COMMANDS.md).
 `-i/-o/-j` are aliases of `--input/--output/--workers`, and `simulate --all-effects` enables all four optional science switches without changing their individual defaults.

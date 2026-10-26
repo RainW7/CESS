@@ -313,7 +313,7 @@ def _profile_provenance(description, state):
     manifest = None
     generation = description['generation']
     if 'profile_library_manifest_path' in state['config']:
-        from cess.morphology.legacy_bundle import _manifest_contract
+        from cess.morphology.profile_bundle import _manifest_contract
         from cess.morphology.libraries import _BUNDLE_LOOKUP
         _require(description.get('version') == 2 and
                  description.get('provenance_status') == 'manifest_verified_generation',

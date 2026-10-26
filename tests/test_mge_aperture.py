@@ -5,16 +5,13 @@ from pathlib import Path
 import sys
 from types import SimpleNamespace
 import warnings
-
 import numpy as np
 import pytest
 from scipy.integrate import dblquad
 from scipy.special import ndtr
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'CESS_v0.8.6'))
-import cess_mge_aperture as aperture
-
-
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
+import cess.morphology.aperture as aperture
 def call(sigmas=(1.,),weights=(1.,),re=3.,pa=35.,q=.3,psf=.2625,pixel=.074,
          n=3,k=1,role='pre_psf',**kw):
     return aperture.mge_strip_kernel(sigmas,weights,re,pa,q,psf,pixel,n,k,role,**kw)

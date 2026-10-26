@@ -4,14 +4,12 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 sys.path.insert(0, str(CORE))
-spec = importlib.util.spec_from_file_location('cess_demo_tests', str(CORE / 'demo.py'))
+spec = importlib.util.spec_from_file_location('cess_demo_tests', str(CORE / 'cess/cli/demo.py'))
 demo = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(demo)
 
@@ -87,9 +85,9 @@ def test_save_png_without_model_or_gui(tmp_path):
     source, product = _fixture(tmp_path)
     source.unlink()
     destination = tmp_path / 'demo.png'
-    env = dict(os.environ, MPLBACKEND='Agg', MPLCONFIGDIR=str(tmp_path / 'mpl'),
+    env = dict(os.environ, PYTHONPATH=str(CORE), MPLBACKEND='Agg', MPLCONFIGDIR=str(tmp_path / 'mpl'),
                PYTHONDONTWRITEBYTECODE='1')
-    result = subprocess.run([sys.executable, '-B', str(CORE / 'demo.py'), str(product),
+    result = subprocess.run([sys.executable, '-B', '-m', 'cess.cli.demo', str(product),
                              '0', 'emissionline', '--save', str(destination)],
                             cwd=str(tmp_path), env=env, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, universal_newlines=True, timeout=40)
@@ -104,7 +102,7 @@ def test_import_is_safe_with_unrelated_argv(tmp_path, monkeypatch):
     monkeypatch.setattr(h5py, 'File', forbidden)
     monkeypatch.setattr(sys, 'argv', ['another-program', '--unrelated'])
     monkeypatch.chdir(str(tmp_path))
-    spec = importlib.util.spec_from_file_location('cess_demo_import_probe', str(CORE / 'demo.py'))
+    spec = importlib.util.spec_from_file_location('cess_demo_import_probe', str(CORE / 'cess/cli/demo.py'))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert callable(module.main)

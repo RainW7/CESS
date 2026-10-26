@@ -2,15 +2,14 @@
 
 from pathlib import Path
 import sys
-
 import numpy as np
 from scipy.integrate import trapezoid
 import pytest
 from astropy import units as u
 
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 sys.path.insert(0, str(CORE))
-from cess_photometry import (measure_photometry, PLANCK_ERG_S,
+from cess.photometry.measurement import (measure_photometry, PLANCK_ERG_S,
                              FLAG_INCOMPLETE_COVERAGE, FLAG_NONPOSITIVE_OBSERVED)
 
 

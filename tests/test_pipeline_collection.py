@@ -10,8 +10,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
-
-from cess.io.legacy_writer import pad_spectral_rows
+from cess.io.science_writer import pad_spectral_rows
 from cess.pipeline import collection as collection_module
 from cess.pipeline.collection import SpectralResults
 from cess.pipeline.results import pad_results

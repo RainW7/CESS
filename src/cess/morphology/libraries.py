@@ -278,7 +278,7 @@ def _check_runtime_bundle(manifest, parameters):
 
 def verified_bundle_identity(parameters):
     """Verify current member bytes before using a runtime bundle cache entry."""
-    from cess.morphology.legacy_bundle import verify_profile_bundle
+    from cess.morphology.profile_bundle import verify_profile_bundle
     directory, _ = _bundle_paths(parameters)
     return verify_profile_bundle(directory)
 
@@ -292,7 +292,7 @@ def load_verified_profile_bundle(parameters, verification=None):
     untrusted pickle safe. No configured path, grid coordinate or PSF is changed.
     Return (width, height, declared_axes, version-2 runtime description).
     """
-    from cess.morphology.legacy_bundle import _regular_member
+    from cess.morphology.profile_bundle import _regular_member
     directory, manifest_path = _bundle_paths(parameters)
     verification = verified_bundle_identity(parameters) if verification is None else verification
     if Path(verification['directory']) != directory:

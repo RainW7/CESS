@@ -4,16 +4,12 @@ import errno
 import os
 from pathlib import Path
 import sys
-
 import pytest
-
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 if str(CORE) not in sys.path:
     sys.path.insert(0, str(CORE))
 
-import cess_profile_publish as publisher
-
-
+import cess.io.publish as publisher
 def _staging(tmp_path):
     staging = tmp_path / 'owned-staging'
     staging.mkdir()

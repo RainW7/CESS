@@ -1,4 +1,4 @@
-"""Compatibility and orchestration helpers for simulation runners.
+"""Orchestration helpers for simulation runners.
 
 I/O implementations live under cess.io. Profile loading stays here so existing
 cached_pickle monkeypatches are resolved at call time. Resource cache identity
@@ -23,7 +23,7 @@ from cess.contracts import (SCHEMA_VERSION, REPAIR_REVISION, COVARIANCE_MODEL,
 from cess.io.cache import _RESOURCE_CACHE, _resource_key, cached_table, cached_pickle
 from cess.io.selection import _SelectedDataset, SourceSelection, simulation_filename
 from cess.io.atomic import output_destination, atomic_hdf5
-from cess.io.legacy_writer import (write_spectral_extraction, write_mge_morphology,
+from cess.io.science_writer import (write_spectral_extraction, write_mge_morphology,
     write_response_products, _PHOTOMETRY_NUMERIC, empty_photometry_result,
     write_photometry_results, pad_spectral_rows, write_vlen_rows, write_el_details,
     write_spectral_covariance, write_line_measurements, _spectral_provenance,
@@ -119,44 +119,13 @@ def resolve_spectral_extraction(parameters, height):
 
 def configure_morphology(parameters):
     """Reuse lazy GEMS state between tasks with the same worker configuration."""
-    import cess.morphology.legacy as morphology
+    import cess.morphology.empirical as morphology
     global _MORPHOLOGY_CONFIGURATION
     signature = json.dumps(parameters, sort_keys=True)
     if signature != _MORPHOLOGY_CONFIGURATION:
         morphology.configure(parameters)
         _MORPHOLOGY_CONFIGURATION = signature
 
-def legacy_main(task, configure, filenames, emission_lines=False):
-    """Compatibility adapter; parse arguments only when explicitly executed.
-
-    The new cess_cli module provides the production bounded worker pool.
-    This legacy file-range adapter is deliberately serial and memory-bounded.
-    """
-    if len(sys.argv) < 3:
-        raise SystemExit('Usage: {} begin end [morph=true wave_cal=true photo=true '
-                         'el_detect=true config=/path output_dir=/path seed=123]'.format(sys.argv[0]))
-    begin, end = int(sys.argv[1]), int(sys.argv[2])
-    arguments = dict(argument.split('=', 1) for argument in sys.argv[3:])
-    options = {key: arguments.pop(key) for key in tuple(arguments)
-               if key in ('morph', 'wave_cal', 'photo', 'el_detect')}
-    parameters = configure(arguments.pop('config', None), options)
-    output = arguments.pop('output_dir', None)
-    seed = arguments.pop('seed', None)
-    seed = None if seed is None else int(seed)
-    if arguments:
-        raise ValueError('Unknown legacy arguments: {}'.format(sorted(arguments)))
-    path = parameters['el_input_path' if emission_lines else 'input_path']
-    failed = False
-    for filename in filenames[begin:end]:
-        try:
-            task(path, filename, output_dir=output, config=parameters,
-                 options=options, seed=seed)
-        except Exception:
-            traceback.print_exc()
-            failed = True
-    if not failed:
-        print('This part of processes is END!')
-    return 1 if failed else 0
 
 def throughput_arrays(table):
     """Return native Angstrom/fractional-response arrays for either FITS schema.
@@ -224,14 +193,4 @@ def combine_band_masks(band_masks, n_sources):
         valid &= good & ~bad
     return valid, ~valid
 
-def join_processes(processes):
-    """Wait for every worker and return a nonzero CLI status on any failure."""
-    failed = []
-    for process in processes:
-        process.join()
-        if process.exitcode != 0:
-            failed.append((getattr(process, 'name', 'worker'), process.exitcode))
-    for name, exitcode in failed:
-        print('{} failed with exit code {}'.format(name, exitcode), file=sys.stderr)
-    return 1 if failed else 0
 

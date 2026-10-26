@@ -1,14 +1,8 @@
-#!/usr/bin/env python3
-# -*-coding:utf-8 -*-
-'''
-@Env     		:   cess (Python 3.7.11) @ Graivty.sjtu.edu.cn 
-@File    		:   run_el_detect.py (historical entry point)
-@Time    		:   2025/01/22 15:24:30
-@Author  		:   Run Wen
-@Version 		:   1.0
-@Contact 		:   wenrun@pmo.ac.cn
-@Description	:   
-'''
+"""Emission-line measurements from an existing CESS spectral product.
+
+Preserve the parent source mapping, uncertainty and covariance definitions.
+Use simulate_file() or cess el-detect. Original author: Run Wen.
+"""
 
 import sys
 from pathlib import Path
@@ -25,7 +19,7 @@ from cess.pipeline.support import (throughput_interpolator, combine_band_masks,
     pad_spectral_rows, output_destination, atomic_hdf5, write_vlen_rows,
     write_el_details, write_line_measurements, record_runner_provenance, normalise_options, cached_table,
     cached_pickle, configure_morphology, SourceSelection, simulation_filename,
-    legacy_main)
+    )
 
 from cess.pipeline.common import validate_output_layout, finalize_product
 
@@ -71,7 +65,7 @@ def task(input_path, hdf5filename, output_dir=None, config=None, options=None,
          seed=None, source_start=0, source_stop=None):
     """Compatibility API: preserve configure-then-task semantics explicitly."""
     from cess.pipeline.context import SimulationContext, _OPERATION_NAMES
-    from cess.morphology import legacy as morphology
+    from cess.morphology import empirical as morphology
     settings = configure(config, options)
     operations = {name: globals()[name] for name in _OPERATION_NAMES if name in globals()}
     operations.update(legacy_rng=legacy_rng, configure_morphology=configure_morphology)
@@ -272,30 +266,7 @@ def simulate_file(input_path, hdf5filename, output_dir=None, config=None, option
         print(f"Finished, total time costs {toc - tic:0.4f} seconds for "+hdf5filename)
         return str(destination)
 
-hdf5filenames = [
-#'CSST_grism_seedcat2_0420_1020_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_76739.hdf5',
-#'CSST_grism_seedcat2_0702_0_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23791.hdf5',
-'CSST_grism_seedcat2_0420_1058_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23492.hdf5',
-'CSST_grism_seedcat2_0420_1064_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23258.hdf5',
-'CSST_grism_seedcat2_0420_1127_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23366.hdf5',
-'CSST_grism_seedcat2_0420_1136_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23320.hdf5',
-'CSST_grism_seedcat2_0420_117_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23358.hdf5',
-'CSST_grism_seedcat2_0420_120_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_76654.hdf5',
-'CSST_grism_seedcat2_0420_123_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_76717.hdf5',
-'CSST_grism_seedcat2_0420_1341_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23366.hdf5',
-'CSST_grism_seedcat2_0420_1350_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_76719.hdf5',
-'CSST_grism_seedcat2_0420_284_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23571.hdf5',
-'CSST_grism_seedcat2_0420_516_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23426.hdf5',
-'CSST_grism_seedcat2_0420_534_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23468.hdf5',
-'CSST_grism_seedcat2_0420_616_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23235.hdf5',
-'CSST_grism_seedcat2_0420_689_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23444.hdf5',
-'CSST_grism_seedcat2_0420_709_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23453.hdf5',
-'CSST_grism_seedcat2_0420_727_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_23360.hdf5',
-#'CSST_grism_seedcat2_0420_871_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_76583.hdf5',
-'CSST_grism_seedcat2_0420_91_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_76656.hdf5',
-'CSST_grism_seedcat2_0420_94_DECaLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_76801.hdf5',
-#'CSST_grism_seedcat2_0702_0_MzLS_0csp_sfh200_bc2003_hr_stelib_chab_neb_300r_i0100_2dal8_10_14538.hdf5',
-]
 
 if __name__ == '__main__':
-    sys.exit(legacy_main(task, configure, hdf5filenames, emission_lines=True))
+    from cess.cli.main import main
+    raise SystemExit(main(['el-detect'] + sys.argv[1:]))

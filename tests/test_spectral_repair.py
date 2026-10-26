@@ -9,7 +9,6 @@ import importlib.util
 from pathlib import Path
 import sys
 import warnings
-
 import numpy as np
 from scipy.integrate import trapezoid
 import pytest
@@ -17,7 +16,7 @@ from scipy.integrate import quad
 from scipy.special import ndtr
 
 
-CORE = Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'
+CORE = Path(__file__).resolve().parents[1] / 'src'
 sys.path.insert(0, str(CORE))
 sys.path.insert(0, str(CORE.parent / 'src'))
 C_AA_S = 2.99792458e18
@@ -34,7 +33,7 @@ def core():
 
 
 def simulator(core, template=None, policy='error'):
-    from cess_config import load_config
+    from cess.config.loader import load_config
     config = load_config()
     config['template_lsf'] = {'mode': 'delta'} if template is None else template
     config['template_lsf_broader_policy'] = policy
@@ -157,7 +156,7 @@ def test_out_of_band_padding_does_not_change_flux_or_lsf(core):
 
 
 def test_zero_sigma_conservative_piecewise_linear_fnu_resampling():
-    from cess_spectral import convolve_to_bins
+    from cess.spectra.integration import convolve_to_bins
     centers = np.asarray([4000., 4100., 4300., 4600.])
     edges = edges_from_centers(centers)
     wave = np.asarray([3800., 3900., 4050., 4210., 4500., 4800.])
@@ -170,7 +169,7 @@ def test_zero_sigma_conservative_piecewise_linear_fnu_resampling():
 
 
 def test_zero_sigma_preserves_weak_continuum_after_strong_line():
-    from cess_spectral import convolve_to_bins
+    from cess.spectra.integration import convolve_to_bins
     wave = np.asarray([3500., 3999., 4000., 4001., 4002., 4500., 5000., 5500., 6500.])
     fnu = np.full(len(wave), 1.e-20)
     fnu[2] = 1.e12
@@ -188,7 +187,7 @@ def test_zero_sigma_preserves_weak_continuum_after_strong_line():
 
 
 def test_resolving_power_zero_crossing_is_stable_and_bounds_subdivision():
-    from cess_spectral import convolve_to_bins
+    from cess.spectra.integration import convolve_to_bins
     coarse = np.asarray([5500., 9700., 9800., 9899.,
                          9900. - 1.e-8, 9900. + 1.e-8, 9950., 10700.])
     fine = np.unique(np.r_[coarse, np.linspace(9700., 10000., 3001)])

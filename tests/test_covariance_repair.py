@@ -1,12 +1,10 @@
 """Independent matrix and sampling checks for registered spectral covariance."""
 from pathlib import Path
 import sys
-
 import numpy as np
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'CESS_v0.8.6'))
-from main import emulator, h
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+from cess.engine import emulator, h
 
 
 def registration(n, offset):

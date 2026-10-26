@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README_zh-CN.md)
 
-This directory provides one-dimensional computation scripts. No Gravity login, Linux environment installation, job submission, or site PBS acceptance has been performed as part of this delivery. Preflight expects `0.9.0 / 20261024-D4`; deploy the same source version and repeat preflight. A Mac `.envs/cess` directory or ARM64 dependency lock cannot be used directly as a Linux environment.
+These scripts run CESS on a PBS compute node. Preflight expects `0.9.0 / 20261024-D4`; deploy that source version in a Python 3.12 Linux environment and run preflight before submitting a job.
 
 `preflight.sh` performs read-only checks of Python 3.12, imported source location, version/revision, configuration, and resource readability, then invokes the actual CLI dry-run. It does not validate instrument science models or establish that every input row is valid. `cess.pbs` executes the simulation, creates a new manifest for an initial run, retains logs and the resume manifest on failure, and propagates failure status. The CLI refuses to overwrite existing products.
 
@@ -80,5 +80,3 @@ qsub -V "$CESS_REPO/scripts/gravity/cess.pbs"
 `-V` explicitly exports the current environment. If the site prohibits that or requires selected variables only, export the CESS variables using its approved method. The script does not call qsub automatically. Logs default to `logs/` under the manifest's parent directory; an absolute `CESS_LOG_DIR` may override it. Each invocation creates a separate log and prints its path first in the PBS output. CPU, memory, and walltime remain subject to scheduler enforcement; these templates do not certify site operation or a particular allocation.
 
 Before resume, confirm that the old processes have stopped and retain the original input/config/resources/source/seed/mode/switches/interval/chunk/output/manifest. Set `CESS_RESUME=1`, repeat the preflight dry-run, then submit with qsub. This preview strictly verifies an existing manifest read-only. Do not reuse an old manifest across code/resource/schema identities; choose new run locations. Never submit two concurrent jobs using the same manifest.
-
-Local validation used temporary toy inputs and local Bash execution, which does not establish site PBS scheduler acceptance. Detailed engineering records are retained separately. Repeat preflight after version or script changes, and do not reuse manifests across versions.

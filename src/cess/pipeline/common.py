@@ -1,4 +1,4 @@
-"""Stateless common preparation and writers for the two legacy runners.
+"""Shared preparation and writers for standard and paired simulations.
 
 Noise calls, tuple unpacking and source-loop decisions stay in each runner.
 Operations are supplied by that runner at task time so its public bindings and

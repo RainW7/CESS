@@ -27,29 +27,19 @@ AXIS_ORDER = ('n', 're_pixel', 'pa_deg', 'axis_ratio')
 GENERATOR_REVISION = '20261023-v0.9.0.dev1-R1'
 BUNDLE_SCHEMA = 'cess.generated_profile_library'
 BUNDLE_VERSION = 1
-_SOURCES = ('morphology/legacy_generator.py', 'io/publish.py',
-            'morphology/legacy_bundle.py', 'morphology/legacy.py', 'spectra/units.py',
+_SOURCES = ('morphology/profile_generator.py', 'io/publish.py',
+            'morphology/profile_bundle.py', 'morphology/empirical.py', 'spectra/units.py',
             'config/loader.py', 'morphology/libraries.py', 'provenance.py',
             'resources.py', '_version.py', '__init__.py')
-_MODULE_NAMES = {
-    'cess_config': 'cess.config.loader', 'morphology': 'cess.morphology.legacy',
-    'utils': 'cess.spectra.units', 'cess_profiles': 'cess.morphology.libraries',
-    'cess_profile_publish': 'cess.io.publish',
-    'cess_profile_bundle': 'cess.morphology.legacy_bundle',
-    'cess_profile_generator': 'cess.morphology.legacy_generator',
-    'cess_reference': 'cess.morphology.reference', 'cess_mge': 'cess.morphology.mge',
-    'cess_mge_bundle': 'cess.morphology.bundle',
-    'cess_mge_library': 'cess.morphology.generator',
-}
 
 
 def _project_module(name):
     """Import only the canonical package module and validate its source location.
 
-    Historical private-helper names are mapped explicitly; cwd top-level names
-    and their sys.modules entries are never consulted. No sys.path is changed.
+    Only fully qualified package names are accepted. The current directory and
+    top-level sys.modules entries are never used. No sys.path is changed.
     """
-    canonical = _MODULE_NAMES.get(name, name)
+    canonical = name
     if not isinstance(canonical, str) or not canonical.startswith('cess.'):
         raise ValueError('Expected a canonical CESS package module: ' + str(name))
     relative = canonical[len('cess.'):].split('.')
@@ -136,7 +126,7 @@ def legacy_axes(pixel_scale):
 
 
 def _configuration(config):
-    module = _project_module('cess_config')
+    module = _project_module('cess.config.loader')
     if isinstance(config, Mapping):
         effective = module.validate_config(config)
         source = {'kind': 'mapping', 'path': None, 'sha256': None}
@@ -242,11 +232,11 @@ def generate_profile_libraries(config, axes, output):
         raise FileNotFoundError('Output parent must exist: {}'.format(output.parent))
     plan = plan_generation(config, axes)
     code = {name: _sha256(PROJECT / name) for name in _SOURCES}
-    morphology = _project_module('morphology')
-    _project_module('utils')
-    profiles = _project_module('cess_profiles')
-    publisher = _project_module('cess_profile_publish')
-    verifier = _project_module('cess_profile_bundle')
+    morphology = _project_module('cess.morphology.empirical')
+    _project_module('cess.spectra.units')
+    profiles = _project_module('cess.morphology.libraries')
+    publisher = _project_module('cess.io.publish')
+    verifier = _project_module('cess.morphology.profile_bundle')
     morphology.configure(plan['effective_config'])
     width, height = morphology.create_lib(*(plan['axes'][name] for name in AXIS_ORDER))
     if list(width.shape) != plan['shape'] or list(height.shape) != plan['shape']:

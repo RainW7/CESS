@@ -3,17 +3,15 @@ import importlib
 import json
 from pathlib import Path
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / 'CESS_v0.8.6'
+CORE = ROOT / 'src'
 sys.path[:0] = [str(CORE), str(ROOT)]
 
-from cess_config import load_config
-from main import emulator, h
+from cess.config.loader import load_config
+from cess.engine import emulator, h
 from test_pipeline_smoke import make_input
 
 
@@ -22,12 +20,12 @@ def source_fixture(directory, count=1, invalid=()):
     inputs.mkdir()
     source = inputs / 'synthetic.hdf5'
     make_input(source, count=count, invalid=invalid)
-    config = load_config(CORE / 'emulator_parameters.json')
+    config = load_config(CORE / 'cess/data/emulator_parameters.json')
     config['input_path'] = str(inputs)
     return source, config
 
 
-def simulate(source, config, destination, extraction=None, module='run', wave_error=False):
+def simulate(source, config, destination, extraction=None, module='cess.pipeline.standard', wave_error=False):
     settings = dict(config, output_path=str(destination))
     if extraction is not None:
         settings['spectral_extraction'] = extraction
@@ -137,7 +135,7 @@ def test_paired_extraction_and_el_subset_inherit_parent_model(tmp_path, monkeypa
     monkeypatch.setattr(emulator, '_sample_wave_offset', staticmethod(lambda rng=None: .5))
     source, config = source_fixture(tmp_path, count=2, invalid=(0,))
     parent_path = simulate(source, config, tmp_path / 'paired', explicit(.4, 7),
-                           module='run_gravity_zouhu', wave_error=True)
+                           module='cess.pipeline.paired', wave_error=True)
     with h5py.File(str(parent_path), 'r') as parent:
         metadata = check_metadata(parent, [False, True])
         assert metadata['source_fraction'][1] == .4 and metadata['spatial_pixels'][1] == 7
@@ -148,7 +146,7 @@ def test_paired_extraction_and_el_subset_inherit_parent_model(tmp_path, monkeypa
             covariance = parent[band + '/covariance_lag1_wce'][1]
             assert np.any(covariance[np.isfinite(covariance)] > 0)
 
-    import run_el_detect
+    import cess.pipeline.emission as run_el_detect
     # A conflicting EL-only configuration must not redefine its parent's aperture.
     post_config = dict(config, spectral_extraction=explicit(.9, 23))
     child_path = run_el_detect.task(str(parent_path.parent), parent_path.name,
@@ -176,8 +174,8 @@ def test_legacy_el_parent_does_not_gain_current_config_aperture(tmp_path):
             group['wave'] = wave
             for name in ('flux_ujy', 'flux_ujy_with_noise', 'snr'):
                 group[name] = np.empty((0, 3))
-    import run_el_detect
-    config = load_config(CORE / 'emulator_parameters.json')
+    import cess.pipeline.emission as run_el_detect
+    config = load_config(CORE / 'cess/data/emulator_parameters.json')
     config['spectral_extraction'] = explicit(.4, 7)
     child_path = run_el_detect.task(str(tmp_path), source.name, output_dir=tmp_path / 'el', config=config)
     with h5py.File(str(child_path), 'r') as child:

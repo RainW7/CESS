@@ -3,17 +3,13 @@ import copy
 import json
 from pathlib import Path
 import sys
-
 import numpy as np
 import pytest
-
-CORE=Path(__file__).resolve().parents[1]/'CESS_v0.8.6'
+CORE=Path(__file__).resolve().parents[1]/'src'
 sys.path.insert(0,str(CORE))
-from cess_config import load_config
-from cess_mge_library import generate_mge_library
-import cess_mge_runtime as runtime
-
-
+from cess.config.loader import load_config
+from cess.morphology.generator import generate_mge_library
+import cess.morphology.runtime as runtime
 @pytest.fixture(scope='module')
 def settings(tmp_path_factory):
     folder=tmp_path_factory.mktemp('mge-runtime')/'basis'

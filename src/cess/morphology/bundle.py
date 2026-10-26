@@ -14,7 +14,7 @@ import stat
 import h5py
 import numpy as np
 
-from cess.morphology.legacy_bundle import (_require, _number, _integer, _digest,
+from cess.morphology.profile_bundle import (_require, _number, _integer, _digest,
     _unique_object, _invalid_constant, _regular_member, _state)
 
 SCHEMA = 'cess.positive_marginal_library'

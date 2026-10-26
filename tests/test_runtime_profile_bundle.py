@@ -8,21 +8,19 @@ from pathlib import Path
 import pickle
 import shutil
 import sys
-
 import h5py
 import numpy as np
 import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / 'CESS_v0.8.6'
+CORE = ROOT / 'src'
 sys.path[:0] = [str(CORE), str(ROOT)]
 
-from cess_config import load_config, validate_config
-from cess_manifest import snapshot, verify_product
-from cess_cli import build_jobs
-from cess_profile_generator import generate_profile_libraries
-from cess_profiles import load_verified_profile_bundle, verify_profile_bundle_binding
-from runner_support import load_profile_libraries
+from cess.config.loader import load_config, validate_config
+from cess.io.manifest import snapshot, verify_product
+from cess.cli.main import build_jobs
+from cess.morphology.profile_generator import generate_profile_libraries
+from cess.morphology.libraries import load_verified_profile_bundle, verify_profile_bundle_binding
+from cess.pipeline.support import load_profile_libraries
 from test_pipeline_smoke import make_input
 
 AXES = {'n': [1.], 're_pixel': [4.], 'pa_deg': [0., 45.], 'axis_ratio': [1.]}
@@ -33,7 +31,7 @@ LEGACY_SHAPE_AXES = {'n': np.arange(20.), 're_pixel': np.arange(20.),
 @pytest.fixture(scope='module')
 def generated(tmp_path_factory):
     path = tmp_path_factory.mktemp('runtime-bundle') / 'bundle'
-    generate_profile_libraries(load_config(CORE / 'emulator_parameters.json'), AXES, path)
+    generate_profile_libraries(load_config(CORE / 'cess/data/emulator_parameters.json'), AXES, path)
     return path
 
 
@@ -41,7 +39,7 @@ def generated(tmp_path_factory):
 def selected(tmp_path, generated):
     path = tmp_path / 'bundle'
     shutil.copytree(str(generated), str(path))
-    config = load_config(CORE / 'emulator_parameters.json')
+    config = load_config(CORE / 'cess/data/emulator_parameters.json')
     config.update(profile_library_manifest_path=str(path / 'manifest.json'),
                   widthlib_pkl=str(path / 'widthlib.pkl'), heightlib_pkl=str(path / 'heightlib.pkl'))
     return path, config
@@ -49,7 +47,7 @@ def selected(tmp_path, generated):
 
 def test_optional_configuration_resolves_three_files_without_changing_default(selected, tmp_path):
     path, config = selected
-    assert 'profile_library_manifest_path' not in load_config(CORE / 'emulator_parameters.json')
+    assert 'profile_library_manifest_path' not in load_config(CORE / 'cess/data/emulator_parameters.json')
     relative = dict(config, profile_library_manifest_path='bundle/manifest.json',
                     widthlib_pkl='bundle/widthlib.pkl', heightlib_pkl='bundle/heightlib.pkl')
     resolved = validate_config(relative, base_dir=tmp_path)
@@ -63,8 +61,8 @@ def test_optional_configuration_resolves_three_files_without_changing_default(se
 
 def test_verified_bytes_and_readonly_worker_cache_are_isolated(selected, monkeypatch):
     directory, config = selected
-    import cess_profiles
-    import runner_support
+    import cess.morphology.libraries as cess_profiles
+    import cess.pipeline.support as runner_support
     original_loads = pickle.loads
     seen = []
 
@@ -106,7 +104,7 @@ def test_invalid_bindings_fail_without_silent_legacy_fallback(selected, problem)
         config['arcsecperpix'] *= 2.
     elif problem in ('width_path', 'height_path'):
         role = problem.split('_')[0]
-        config[role + 'lib_pkl'] = load_config(CORE / 'emulator_parameters.json')[role + 'lib_pkl']
+        config[role + 'lib_pkl'] = load_config(CORE / 'cess/data/emulator_parameters.json')[role + 'lib_pkl']
     elif problem == 'pa_axis':
         manifest['axes']['pa_deg'][0] = -1.
         manifest_path.write_text(json.dumps(manifest))
@@ -159,14 +157,14 @@ def test_manifest_changed_after_load_is_not_published_under_old_binding(selected
         verify_profile_bundle_binding(config, description)
 
 
-@pytest.mark.parametrize('module,mode', [('run', 'standard'), ('run_gravity_zouhu', 'paired-wce')])
+@pytest.mark.parametrize('module,mode', [('cess.pipeline.standard', 'standard'), ('cess.pipeline.paired', 'paired-wce')])
 def test_runtime_axes_product_resume_validation_and_el_parent_inheritance(selected, tmp_path, monkeypatch, module, mode):
     _, config = selected
     source = tmp_path / 'synthetic.hdf5'
     make_input(source, count=2, invalid=(1,))
     output = tmp_path / 'products'
     options = dict(morph=True, wave_cal=True, photo=False, el_detect=True)
-    import morphology
+    import cess.morphology.empirical as morphology
     match = morphology.match_input_paramters
     used_axes = []
 
@@ -200,8 +198,8 @@ def test_runtime_axes_product_resume_validation_and_el_parent_inheritance(select
             assert np.isnan(handle[band + '/ferr'][1]).all()
         old_binding = handle.attrs['profile_library_provenance_json']
 
-    import run_el_detect
-    el_config = load_config(CORE / 'emulator_parameters.json')
+    import cess.pipeline.emission as run_el_detect
+    el_config = load_config(CORE / 'cess/data/emulator_parameters.json')
     child_output = tmp_path / 'postprocess'
     child = run_el_detect.task(str(product.parent), product.name, output_dir=child_output,
         config=el_config, seed=1214, source_start=0, source_stop=1)
