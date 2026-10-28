@@ -2,7 +2,7 @@
 
 [English](SCIENCE_MODELS.md) | [简体中文](SCIENCE_MODELS_zh-CN.md)
 
-本文说明当前代码采用的模型。参数可以复现计算，但不因软件发布就成为经独立定标的CSST官方仪器模型。普通运行命令见[命令指南](COMMANDS_zh-CN.md)，字段布局见[输出说明](OUTPUT_LAYOUT_zh-CN.md)。
+本文说明 CESS `0.9.0`、科学 revision `20261027-D5` 采用的模型。参数可以复现计算，但不因软件发布就成为经独立定标的CSST官方仪器模型。普通运行命令见[命令指南](COMMANDS_zh-CN.md)，字段布局见[输出说明](OUTPUT_LAYOUT_zh-CN.md)。
 
 ## 1. 输入与单位
 
@@ -22,7 +22,11 @@ A为计算所用集光面积，波长与积分变量采用一致单位。响应�
 
 输出 `flux_ujy` 是当前像元定义下的光子等价bin流量密度，不能把它无条件当作任意波长的连续函数点值。光子账目使用相应的 `pixel_width/wave` 权重；共享 `wave_edges` 和 `pixel_width` 明确像元几何。有限波段、核窗口和探测器边界的损失必须保留。
 
-当前上游仪器Gaussian FWHM由 `gu_dlambda/gv_dlambda/gi_dlambda` 控制，随包值为15/21/33 Angstrom。`gu_Res/gv_Res/gi_Res` 的数值不参与此算子；只修改这些数字不会改变模拟分辨率。输出像元间距也不能直接等同于这些FWHM，应读取实际输出网格。
+随包仪器参考采用 [Zhang 等，arXiv:2511.06917v2](https://arxiv.org/html/2511.06917#S2) 表1的中央波长与中央分辨本领。GU/GV/GI 输出边界为 2550–4100 / 4000–6400 / 6200–10000 Å。启用 `instrument_lsf.mode=central_resolving_power` 时，`*_central_wl` 与 `*_Res` 实际参与计算，按 `central_wl/Res` 得到目标 Gaussian FWHM，约为 11.74216 / 22.62931 / 39.13043 Å。
+
+显式的 `wavelength_law=constant_fwhm` 将这个参考宽度延拓到各自波段；论文只规定中央波长处的 R，没有证明全带恒定 R。Gaussian 仪器轮廓与上述延拓均是一维近似，论文也没有明确分解 LSF 中的像元积分与 PSF。因此，目标 Gaussian 宽度不等于最终像元积分、形态展宽后分辨率的认证。[仪器模型说明](INSTRUMENT_MODEL_251106917_zh-CN.md)区分了参考值、推导量和保留假设。
+
+默认 `spectral_sampling.mode=resolution_elements` 请求每个参考分辨单元四个像元。程序按 `ceil(band_span/(FWHM/4))` 设置 bin 数并保留精确波段边界，GU/GV/GI 分别为 529 / 425 / 389 bins。实际像元宽度约为 2.93006 / 5.64706 / 9.76864 Å；应读取 `wave_edges` 与 `pixel_width`，不要把采样等同于 FWHM。默认 `spectral_window.mode=bandpass` 依据实际波长网格选择探测器/S/N和发射线范围。缺少这些新模型键的旧外部配置仍沿用固定 `*_dlambda`、历史网格和索引窗口行为。
 
 `template_lsf` 与波长采样独立：
 
@@ -33,7 +37,9 @@ A为计算所用集光面积，波长与积分变量采用一致单位。响应�
 | `resolving_power` | 显式Gaussian近似及正的R值，按观测系匹配所需额外展宽 |
 | `fwhm_rest` | 显式静止系Gaussian FWHM，单位Angstrom |
 
-已确认的既有模板nominal R=300是来源信息，不能单独证明其详细LSF为Gaussian。随包默认仍为 `unknown`。模板比目标更宽时由 `template_lsf_broader_policy=error/preserve` 显式处理，不能静默锐化或把负方差截成零来声称匹配成功。
+随包模板模型为 `resolving_power`、`value=300.0`，采用用户于 2026-10-27 为这批 BayeSED 库明确选择的 Gaussian R=300 近似。该假设不是上述仪器参考论文的测量结论；换用其他输入库时须相应设置模板 LSF。
+
+默认 `template_lsf_broader_policy=preserve` 在模板已经比目标更宽的位置不再施加额外仪器展宽，并报告目标未达到。具体而言，R=300 模板在 GU 约 3522.65 Å 以上比参考目标更宽，程序保留已有宽度，不反卷积，也不把它标记为成功匹配。另选 `error` 策略可拒绝这种计算。模板 LSF 描述上游数值/仪器平滑，不能把真实天体的本征谱线宽度作为模板响应扣除。
 
 ## 3. 源形态、PSF与孔径
 
@@ -75,8 +81,8 @@ $$
 
 standard模式中 `/zero_order` 是通带积分测光；历史谱数组的 `_0th` 后缀是既有一维诊断proxy，不是CCD上的真实二维零级图像。v0.9.0没有模拟源之间的二维谱重叠或污染。
 
-发射线模块区分本征峰、含噪候选、匹配、误报和漏检；输出的窗口线通量与S/N使用旁带仿射连续谱及当前协方差模型。候选峰不自动成为已确认原子线。固定窗口可能丢失线翼、混入邻线；从同一含噪数据选择中心还存在选择/定心偏差。窗口S/N不等于独立检出显著度，也不是完备度或污染率的实测认证。
+发射线模块区分本征峰、含噪候选、匹配、误报和漏检；输出的窗口线通量与S/N使用旁带仿射连续谱及当前协方差模型。候选峰不自动成为已确认原子线。配置中的40像元线窗口和20像元旁带仍是分析选择，其物理宽度由实际输出网格决定，未由仪器论文定标。固定窗口可能丢失线翼、混入邻线；从同一含噪数据选择中心还存在选择/定心偏差。窗口S/N不等于独立检出显著度，也不是完备度或污染率的实测认证。
 
 ## 6. 科研使用
 
-研究中应记录采用的版本、输入SHA、有效配置、随机种子和具体字段定义，并核对适用于研究目标的PSF/LSF、响应、背景、孔径、灵敏度和选择函数。
+研究中应记录采用的版本、科学revision、输入SHA、有效配置、随机种子和具体字段定义，并核对适用于研究目标的PSF/LSF、响应、背景、孔径、灵敏度和选择函数。旧科学revision的manifest不能用于续跑D5计算；应保留旧产品，另建输出/manifest或Gravity运行目录。

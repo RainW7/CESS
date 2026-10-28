@@ -12,6 +12,7 @@ from cess.spectra.numerics import trapezoid
 from cess.constants import h
 import cess.spectra.units as utils
 from cess.spectra.integration import integrate_response, response_curve
+from cess.instrument.spectral import window_indices
 
 
 hst_vband_bkg = { 
@@ -430,12 +431,8 @@ class DetectorMixin:
         fnu_error = np.sqrt(variance) * conversion
         snr = np.full_like(wave, np.nan)
         np.divide(observed, np.sqrt(variance), out=snr, where=valid & (variance > 0))
-        bands = {'GU': (self.config['gu_init_idx'], self.config['gu_end_idx']), 'GV': (self.config['gv_init_idx'], self.config['gv_end_idx']),
-                 'GI': (self.config['gi_init_idx'], self.config['gi_end_idx'])}
-        if grism not in bands:
-            raise ValueError('Invalid grism; expected GU, GV or GI.')
         spec_mask = np.zeros(wave.size, dtype=bool)
-        start, stop = bands[grism]
+        start, stop = window_indices(self.config, grism, wave)
         spec_mask[start:stop] = True
         spec_mask &= valid
         finite_snr = spec_mask & np.isfinite(snr)

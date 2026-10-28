@@ -13,12 +13,13 @@ from numbers import Integral, Real
 import os
 from pathlib import Path
 from cess.resources import default_config_path
+from cess.instrument.spectral import normalise_spectral_configuration
 
 
 DEFAULT_CONFIG_PATH = default_config_path()
 _RUNTIME_PATH_FIELDS = ('input_path', 'output_path', 'el_input_path', 'el_output_path')
 _INSTRUMENT_FIELDS = ('radi', 'expt', 'expnum', 'arcsecperpix', 'dc_value')
-_BAND_FIELDS = ('start_wl', 'end_wl', 'min_wl', 'max_wl', 'dlambda', 'init_idx', 'end_idx')
+_BAND_FIELDS = ('start_wl', 'end_wl', 'min_wl', 'max_wl')
 
 
 def _absolute_path(value, base_dir):
@@ -57,7 +58,12 @@ def validate_config(mapping, base_dir=None):
     of wavelength sampling: unknown/delta have no value, resolving_power uses a
     positive dimensionless value, and fwhm_rest uses a positive FWHM in rest-frame
     Angstrom. A broader-than-target template is governed by error/preserve;
-    neither policy authorizes silent sharpening or variance clamping.
+    neither policy authorizes silent sharpening or variance clamping. Explicit
+    central_resolving_power instruments derive a constant observed FWHM from
+    each band's central_wl/Res; omission preserves historical dlambda controls.
+    Explicit resolution-element sampling separates pixel spacing from that LSF
+    and treats min/max as integration edges. Bandpass analysis windows are
+    resolved on actual spectral centers; old mappings retain explicit indexes.
 
     Paths named *_path or *_pkl resolve against base_dir, or existing
     _config_dir/_config_path metadata, or the bundled data directory for a
@@ -190,6 +196,7 @@ def validate_config(mapping, base_dir=None):
     if positive_count and 'profile_library_manifest_path' in config:
         raise ValueError('C7 profile_library_manifest_path cannot coexist with mge_strip source-basis paths.')
     config['spectral_extraction'] = extraction
+    normalise_spectral_configuration(config)
     for band in ('gu', 'gv', 'gi'):
         for suffix in ('start_wl', 'end_wl', 'min_wl', 'max_wl', 'dlambda'):
             _number(config, band + '_' + suffix, strictly_positive=True)

@@ -7,6 +7,7 @@ Use simulate_file() or cess el-detect. Original author: Run Wen.
 import sys
 from pathlib import Path
 import numpy as np
+from cess.instrument.spectral import window_indices
 import h5py
 from astropy.table import Table
 from collections.abc import Mapping
@@ -114,6 +115,8 @@ def simulate_file(input_path, hdf5filename, output_dir=None, config=None, option
         # Extract data
         gvwave = f['GV']['wave'][:]
         giwave = f['GI']['wave'][:]
+        gv_initial, gv_end = window_indices(context.config, 'GV', gvwave)
+        gi_initial, gi_end = window_indices(context.config, 'GI', giwave)
         gv_ujy = f['GV']['flux_ujy'][:]
         gi_ujy = f['GI']['flux_ujy'][:]
         gv_ujy_with_noise = f['GV']['flux_ujy_with_noise'][:]
@@ -123,8 +126,8 @@ def simulate_file(input_path, hdf5filename, output_dir=None, config=None, option
 
         # Paired parent products carry an additional independently measured WCE variant.
         wce_noisy_lines = {}
-        for band, wave, start, stop in (('GV', gvwave, context.config['gv_init_idx'], context.config['gv_end_idx']),
-                                        ('GI', giwave, context.config['gi_init_idx'], context.config['gi_end_idx'])):
+        for band, wave, start, stop in (('GV', gvwave, gv_initial, gv_end),
+                                        ('GI', giwave, gi_initial, gi_end)):
             if 'flux_ujy_with_noise_wce' in f[band]:
                 wce_noisy_lines[band] = [emulator.el_detect(
                     wave, spectrum, start, stop, context.config['noisy_el_detect_th'])
@@ -137,11 +140,11 @@ def simulate_file(input_path, hdf5filename, output_dir=None, config=None, option
         gi_intrinsic_lines = []
         # detect emission lines in both intrinsic and noisy spectra in GV and GI band
         for i in (range(len(f['ID'][:]))):
-            gv_noisy_lines.append(emulator.el_detect(gvwave,gv_ujy_with_noise[i],context.config['gv_init_idx'],context.config['gv_end_idx'],context.config['noisy_el_detect_th']))
-            gv_intrinsic_lines.append(emulator.el_detect(gvwave,gv_ujy[i],context.config['gv_init_idx'],context.config['gv_end_idx'],context.config['intri_el_detect_th']))
+            gv_noisy_lines.append(emulator.el_detect(gvwave,gv_ujy_with_noise[i],gv_initial,gv_end,context.config['noisy_el_detect_th']))
+            gv_intrinsic_lines.append(emulator.el_detect(gvwave,gv_ujy[i],gv_initial,gv_end,context.config['intri_el_detect_th']))
 
-            gi_noisy_lines.append(emulator.el_detect(giwave,gi_ujy_with_noise[i],context.config['gi_init_idx'],context.config['gi_end_idx'],context.config['noisy_el_detect_th']))
-            gi_intrinsic_lines.append(emulator.el_detect(giwave,gi_ujy[i],context.config['gi_init_idx'],context.config['gi_end_idx'],context.config['intri_el_detect_th']))
+            gi_noisy_lines.append(emulator.el_detect(giwave,gi_ujy_with_noise[i],gi_initial,gi_end,context.config['noisy_el_detect_th']))
+            gi_intrinsic_lines.append(emulator.el_detect(giwave,gi_ujy[i],gi_initial,gi_end,context.config['intri_el_detect_th']))
         # get the total emission line information array of intrinsic and noisy spectra
         gv_intri_el, gv_detect_el, gv_el_details = emulator.el_success(gv_noisy_lines,gv_intrinsic_lines,context.config['el_detect_success_th'], return_details=True)
         gi_intri_el, gi_detect_el, gi_el_details = emulator.el_success(gi_noisy_lines,gi_intrinsic_lines,context.config['el_detect_success_th'], return_details=True)
@@ -172,8 +175,8 @@ def simulate_file(input_path, hdf5filename, output_dir=None, config=None, option
         gi_el_flag = np.array(gi_el_flag)
 
         # Get SNR for emission lines
-        gv_el_snr = emulator.get_el_snr(gv_snr, gv_el_flag, gv_detect_el, context.config['gv_init_idx'], context.config['gv_elwidth'])
-        gi_el_snr = emulator.get_el_snr(gi_snr, gi_el_flag, gi_detect_el, context.config['gi_init_idx'], context.config['gi_elwidth'])
+        gv_el_snr = emulator.get_el_snr(gv_snr, gv_el_flag, gv_detect_el, gv_initial, context.config['gv_elwidth'])
+        gi_el_snr = emulator.get_el_snr(gi_snr, gi_el_flag, gi_detect_el, gi_initial, context.config['gi_elwidth'])
 
         # Save results to HDF5 file
         parameters_elg = np.hstack([gv_el_flag.reshape((len(f['ID'][:]), 1)), gi_el_flag.reshape((len(f['ID'][:]), 1))])

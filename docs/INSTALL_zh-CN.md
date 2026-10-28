@@ -183,7 +183,7 @@ python -c 'import sys, cess; print(sys.executable, cess.__version__, cess.__file
 CLI 默认每worker请求1个数值库线程。文件级并发用 `-j N`，默认1；增加worker前应确认同时运行的任务内存。
 具体见 [CPU设置](USER_GUIDE_zh-CN.md#61-cpu进程数与线程设置)与[Bash 命令指南](COMMANDS_zh-CN.md)。
 当前不是MPI跨节点程序。
-Gravity使用独立Linux环境和[服务器脚本](../scripts/gravity/README_zh-CN.md)，先确认本站资源申请语法。
+Gravity使用独立Linux环境和[服务器脚本](../scripts/gravity/README_zh-CN.md)。大量星表请使用[按文件提交的 Torque 作业数组](../scripts/gravity/ARRAY_zh-CN.md)，并核对当前队列和账户限制。
 
 ## 5. 从源码运行测试
 

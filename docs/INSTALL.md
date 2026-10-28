@@ -189,7 +189,7 @@ The CLI requests one numeric-library thread per worker by default. File-level co
 Before increasing the worker count, ensure sufficient memory for the simultaneous tasks. See
 [CPU settings](USER_GUIDE.md#61-cpu-processes-and-threads) and the [Bash command guide](COMMANDS.md).
 The current program does not distribute MPI work across nodes.
-Gravity uses its own Linux environment and the [server scripts](../scripts/gravity/README.md); confirm the site's resource-request syntax first.
+Gravity uses its own Linux environment and the [server scripts](../scripts/gravity/README.md). For catalogue campaigns, use the [per-file Torque job arrays](../scripts/gravity/ARRAY.md) and check the current queue and account limits.
 
 ## 5. Run tests from source
 

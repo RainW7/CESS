@@ -25,7 +25,7 @@ def test_aliases_share_contracts_and_one_cache_owner():
     assert support.LINE_MEASUREMENT_DTYPE is contracts.LINE_MEASUREMENT_DTYPE
     assert support.MGE_MORPHOLOGY_FIELDS is contracts.MGE_MORPHOLOGY_FIELDS
     assert support.SCHEMA_VERSION == '2.5'
-    assert support.REPAIR_REVISION == '20261024-D4'
+    assert support.REPAIR_REVISION == '20261027-D5'
 
 
 def test_pickle_cache_reuses_identity_and_invalidates_changed_file(tmp_path):
@@ -135,7 +135,7 @@ def test_provenance_retains_r2_and_shared_code_hash_provider(tmp_path, monkeypat
     with h5py.File(str(tmp_path / 'metadata.hdf5'), 'w') as file:
         file['ID'] = np.empty(0, dtype='i8')
         support.record_runner_provenance(file, {}, dict(contracts.OPTION_DEFAULTS))
-        assert file.attrs['cess_repair_revision'] == '20261024-D4'
+        assert file.attrs['cess_repair_revision'] == '20261027-D5'
         assert file.attrs['schema_version'] == '2.5'
         assert file.attrs['software_version'] == __version__
         assert json.loads(file.attrs['code_sha256_json']) == expected

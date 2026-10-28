@@ -8,14 +8,15 @@ import pytest
 CORE = Path(__file__).resolve().parents[1] / 'src'
 sys.path.insert(0, str(CORE))
 from cess.config.loader import load_config, validate_config
+from legacy_config import load_legacy_config
 
 
 @pytest.fixture
 def parameters():
-    return load_config(CORE / 'cess/data/emulator_parameters.json')
+    return load_legacy_config()
 
 
-def test_default_lsf_is_explicitly_unknown_and_broader_policy_errors(parameters):
+def test_legacy_mapping_missing_lsf_defaults_to_unknown_and_broader_policy_errors(parameters):
     parameters.pop('template_lsf')
     parameters.pop('template_lsf_broader_policy')
     result = validate_config(parameters)

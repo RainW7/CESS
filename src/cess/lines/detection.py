@@ -108,6 +108,17 @@ class LineDetectionMixin:
         init_wave, end_wave = int(init_wave), int(end_wave)
         x = wave[init_wave:end_wave]
         y = flux[init_wave:end_wave]
+        # Whole-band windows include unsupported WCE/calibration edge bins.
+        # Trim only those edges, never interpolate across an internal gap.
+        # Returned peak indexes remain relative to the original requested
+        # window so all writers and diagnostics retain their source alignment.
+        edge_offset = 0
+        if getattr(self, 'config', {}).get('spectral_window', {}).get('mode') == 'bandpass':
+            available = np.flatnonzero(np.isfinite(y))
+            if available.size < 4:
+                return lines_template.copy()
+            edge_offset, last = int(available[0]), int(available[-1]) + 1
+            x, y = x[edge_offset:last], y[edge_offset:last]
         if (x.size < 4 or not np.all(np.isfinite(x)) or
                 not np.all(np.isfinite(y)) or np.any(x <= 0.) or
                 np.any(np.diff(x) <= 0.)):
@@ -133,6 +144,8 @@ class LineDetectionMixin:
         required = ('line_center', 'line_type', 'line_center_index')
         if any(name not in lines.colnames for name in required):
             raise ValueError('Line detector returned an incompatible table')
+        if edge_offset:
+            lines['line_center_index'] = lines['line_center_index'] + edge_offset
         return lines
 
     @staticmethod

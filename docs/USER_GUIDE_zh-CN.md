@@ -2,7 +2,7 @@
 
 [English](USER_GUIDE.md) | [简体中文](USER_GUIDE_zh-CN.md)
 
-用户指南，2026-10-26。适用于 CESS `0.9.0`，revision `20261024-D4`。
+用户指南，2026-10-28。适用于 CESS `0.9.0`，科学 revision `20261027-D5`。
 
 软件定位、功能总览和版本变化见[中文README](../README_zh-CN.md)。本页按实际操作顺序展开。
 首次使用命令行，先阅读[Bash 命令手册](COMMANDS_zh-CN.md)：其中逐项解释路径、引号、换行、并行、日志和续跑。只需要最短入口时可先看[快速上手](QUICKSTART_zh-CN.md)。
@@ -11,6 +11,7 @@
 | --- | --- |
 | 创建环境、安装、检查解释器 | 第2节；详细安装方案见[安装指南](INSTALL_zh-CN.md) |
 | 单文件、目录、并行或源行子集 | 第6节；可复制的完整命令见[命令手册](COMMANDS_zh-CN.md) |
+| 查看仪器参考、LSF与波长网格 | 第5节及[仪器模型指南](INSTRUMENT_MODEL_251106917_zh-CN.md) |
 | 断点续跑和预检 | 第7节 |
 | 发射线后处理 | 第8节 |
 | 读取 HDF5、展示和抽样 | 第9–10节 |
@@ -157,12 +158,19 @@ cess simulate --input "$CESS_GUIDE_RUN/toy.hdf5" \
 | `radi`、`expt`、`expnum` | 口径半径cm、单次曝光s、曝光次数；不能把半径当直径 |
 | `arcsecperpix` | arcsec/pixel；与所用形态库的尺度假设一致 |
 | `dc_value`、`read_noise` | 暗电流e-/s/pixel；每次读出的单像元RMS读出噪声e- |
-| `gu/gv/gi` 的波长字段 | `start_wl/end_wl/min_wl/max_wl/dlambda`用Å；`init_idx/end_idx`是检测索引 |
-| 背景和模板LSF | 默认`fixed_template`背景、`template_lsf.mode=unknown`；不是时变天空或详细LSF的认证 |
+| `gu/gv/gi` 的波长字段 | 波长和线宽均用Å；在新采样模式中，`min_wl/max_wl`定义bin外边界，不是首末中心 |
+| `instrument_lsf` | 随包为`central_resolving_power`、`wavelength_law=constant_fwhm`；按`*_central_wl / *_Res`推导目标Gaussian宽度 |
+| `spectral_sampling` | 随包为`resolution_elements`、`pixels_per_resolution_element=4.0`；以实际输出几何为准 |
+| `spectral_window` | 随包为`bandpass`，按实际波长推导分析窗口；此时`init_idx/end_idx`为推导缓存 |
+| 背景和模板LSF | `fixed_template`天空；输入模板采用Gaussian R=300及`template_lsf_broader_policy=preserve`，结果取决于该输入库假设 |
 | throughput、背景、GEMS、形态库 | 使用实际配置路径；七波段和零级资源按产品与开关读取 |
 | `spectral_extraction` | 默认`legacy_full`，进阶模式见第12节 |
 
-上游Gaussian光谱FWHM当前由 `*_dlambda` 控制，`*_Res` 数字不参与该算子；只改 `*_Res` 不会实现预期的分辨率变化。默认模板的nominal R=300说明也不等于已知详细LSF。配置验证记录有效值和来源，但不会自动把历史假设变成仪器定标。
+随包D5配置采用 [arXiv:2511.06917v2](https://arxiv.org/html/2511.06917#S2) 表1的中央波长和中央R值，按这两个字段推导目标Gaussian FWHM，并在各自波段内保持该宽度。有效宽度写入`*_dlambda`，仅修改这个推导缓存不会改变参考模型。论文没有证明各波段全带恒定R，也没有提供完整仪器LSF；参考值、采样与假设见[仪器模型指南](INSTRUMENT_MODEL_251106917_zh-CN.md)。
+
+模板设置`{"mode": "resolving_power", "value": 300.0}`是为所用BayeSED库采用的Gaussian近似，不是仪器论文的测量结论。GU约3522.65 Å以上，模板已经比目标更宽；默认`template_lsf_broader_policy=preserve`保留已有宽度，并提示目标未达到。若必须在此情况下停止，可选择`error`，但卷积不能将它修复为更窄的谱线。其他输入库须相应设置`template_lsf`。
+
+缺少新仪器/采样/窗口键的外部配置仍沿用早期`fixed_fwhm` / `legacy` / `indices`约定；在该仪器模式中，`*_dlambda`仍控制宽度，`*_Res`作描述。验证会记录有效配置，不会使任一约定自动成为仪器定标。
 
 为方便审阅，当前包内默认JSON的部分数值如下；它们是**当前程序配置**，不是本文独立认证的CSST仪器规格。实际外部配置可以不同：
 
@@ -172,10 +180,15 @@ cess simulate --input "$CESS_GUIDE_RUN/toy.hdf5" \
 | 光谱`expt × expnum` | 150 s × 4 = 600 s |
 | `arcsecperpix` | 0.074 arcsec/pixel |
 | `dc_value` / `read_noise` | 0.02 e-/s/pixel / 5 e-/pixel/exposure RMS |
-| GU/GV/GI `*_dlambda` | 15 / 21 / 33 Å；当前上游Gaussian FWHM，不直接等于最终输出像元间隔 |
+| GU/GV/GI 波长外边界 | 2550–4100 / 4000–6400 / 6200–10000 Å |
+| GU/GV/GI 中央波长 / R | 3370 / 287；5250 / 232；8100 / 207，波长单位Å |
+| GU/GV/GI 推导 `*_dlambda` | 11.74216028 / 22.62931034 / 39.13043478 Å；目标像元积分前Gaussian FWHM |
+| GU/GV/GI 光谱bin数 | 529 / 425 / 389；保留精确外边界，中心取中点 |
+| GU/GV/GI 实际像元宽度 | 2.93005671 / 5.64705882 / 9.76863753 Å |
 | `background_scale` | 1.0，固定背景模板倍率 |
 
 七波段测光和真实零级积分使用各自的`photometry_exposures`、`zero_order_exposures`，不能把所有产品都按上述600 s解释。
+Throughput、天空、GEMS及形态库文件保留原有内容；论文中的R80不被替换为PSF FWHM。新网格也会改变按像元定义的线窗口与波长误差偏移所对应的波长跨度；保留分析参数不代表保留其以Å表示的宽度，也不代表检出阈值经过独立定标。
 
 ## 6. 模式、开关和批处理
 
@@ -280,7 +293,8 @@ PID、源区间和耗时。未指定 `-j` 时默认1；多个任务会提示按�
 应减小chunk或使用内存足够的主机。若一个文件有1000行、chunk100，则有10个任务；
 单个文件未分片时只有一个任务，即使设置8 workers也只运行一个计算进程。
 
-**Gravity运行。**先通过PBS申请同一计算主机的CPU和内存，再设置CESS进程数。这是两个独立步骤。
+**Gravity运行。**大量独立星表可直接使用 [Torque 作业数组](../scripts/gravity/ARRAY_zh-CN.md)：每文件一个 1 CPU 子作业，MzLS 和 DECaLS 分别申请内存，每个文件保存独立恢复清单。准备、完整文件试跑和全量提交见该指南。
+自定义单节点批次仍可使用 `cess.pbs`；先通过PBS申请同一计算主机的CPU和内存，再设置CESS进程数。这是两个独立步骤。
 假设已分配8个CPU，且内存足以容纳所选任务，可以设置：
 
 ```bash
@@ -293,17 +307,17 @@ unset CESS_CHUNK_SIZE  # 每个输入文件一个完整任务；设正整数才�
 
 `CESS_CPUS`只是脚本用于检查`CESS_WORKERS <= CESS_CPUS`的用户声明，**不会申请或自动核验PBS实际分配的CPU数量**。例如申请8核却只设`CESS_WORKERS=1`仍只启动一个计算worker；只设`CESS_CPUS=8`却未申请8核，也不意味着获得了8核资源。线程限为1时，8个忙碌worker通常对应约8路计算并发，但父进程和其他辅助工作仍会产生额外开销。
 
-现有`cess.pbs`故意没有预设CPU/内存/队列指令。若Gravity使用PBS Pro/OpenPBS资源语法，单主机8 CPU的申请示意为：
+基础 `cess.pbs` 没有预设资源指令。Gravity 的[官方作业说明](https://jupyter.gravity.sjtu.edu.cn/doc/#/Basic/Job)使用 Torque，单主机8 CPU的申请示意为：
 
 ```text
-#PBS -l select=1:ncpus=8:mem=<requested_memory>
+#PBS -q normal
+#PBS -l nodes=1:ppn=8
+#PBS -l mem=<requested_memory>
 #PBS -l walltime=12:00:00
 ```
 
 `<requested_memory>` 必须替换为根据任务估算、本站允许的实际资源量；12小时也只是格式示例，
-不是全量任务保证。若本站使用Torque风格，CPU部分通常改用`nodes=1:ppn=8`；两种语法不能同时套用，
-应按实际Gravity配置选择。PBS Pro语法参考[官方用户指南](https://help.altair.com/2024.1.0/PBS%20Professional/PBSUserGuide2024.1.pdf)，
-本站队列、资源单位和分配规则仍以服务器为准。
+不是全量任务保证。不要使用 `select=...` 的 PBS Pro/OpenPBS 写法。队列当前限制仍以 `qstat -q`、`qstat -f -Q` 和实际账户权限为准。
 
 当前脚本接受单个HDF5或输入目录，固定每worker数值库线程请求为1；还可设置可选的
 `CESS_MEMORY_BUDGET_GIB` 将保守内存预算传给CLI，具体见[Gravity说明](../scripts/gravity/README_zh-CN.md)。
@@ -312,6 +326,8 @@ unset CESS_CHUNK_SIZE  # 每个输入文件一个完整任务；设正整数才�
 也可按独立输入或批次提交不同作业，各用独立输出和manifest。
 
 ## 7. dry-run与严格续跑
+
+科学revision D5改变了LSF/网格配置。保留旧产品，D5计算应选择新输出与manifest路径，不能用`--resume`继续旧科学revision；Gravity批次也须重新prepare一个新运行目录。随机种子相同不代表改变物理设置后仍得到旧光谱。
 
 三种预览有不同文件行为：不带manifest的新任务 `--dry-run` 只打印规划；新任务同时带 `--manifest` 会创建任务清单，并可能触及父目录/锁文件，但不计算科学产品；已有任务 `--resume --dry-run --manifest ...` 走严格只读核验，不创建新输出或改写旧清单。若已做过第二种预览，后续实际执行应加 `--resume`，而不是再次把该清单当新任务。
 
@@ -427,7 +443,7 @@ paired-wce的光谱页显示基础分支，`*_wce` 可在结构或X-Y页查看�
 
 请按[一维科学模型说明](SCIENCE_MODELS_zh-CN.md)、[MGE形态模型指南](MGE_MODELS_zh-CN.md)和[MGE库格式](MGE_BUNDLE_FORMAT.md)理解并合入完整配置。示例空间像元、核半宽及 `pre_psf` 都是待核验假设，不能直接认作CSST定标值。库像元尺度、PSF声明及配置必须一致，也不能混用旧pickle bundle与正值库格式。
 
-Gravity交付见[scripts/gravity/README.md](../scripts/gravity/README_zh-CN.md)，使用现有 `preflight.sh` 和 `cess.pbs`。脚本要求绝对路径、版本身份、受限worker与线程、独立日志及显式resume；新任务预检省略manifest以免生成清单。PBS flavour、队列和CPU/内存语法须在真实服务器确认，用户自行qsub。
+大批星表按[Gravity作业数组指南](../scripts/gravity/ARRAY_zh-CN.md)运行；自定义单节点批次仍可按[Gravity概览](../scripts/gravity/README_zh-CN.md)使用`preflight.sh`和`cess.pbs`。两种方式均要求绝对路径、版本身份、受限worker与线程、独立日志及严格resume；新任务预检省略manifest以免生成清单。提交前须核对Gravity当前队列和账户限制，由用户自行`qsub`。D5应重新prepare新批次，不要修改旧运行的冻结配置；本地payload核验不代表已完成服务器资源或全星表验收。
 
 源码和文档采用[MIT许可](../LICENSE)，随包资源范围和来源见[资源说明](../RESOURCE_NOTICE_zh-CN.md)及[资源清单](RESOURCE_MANIFEST.json)。
 

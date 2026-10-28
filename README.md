@@ -4,7 +4,7 @@
 
 English | [简体中文](README_zh-CN.md)
 
-Version: v0.9.0 · Python 3.12
+Version: v0.9.0 · scientific revision `20261027-D5` · Python 3.12
 
 CESS reads galaxy spectral templates and catalogues produced by BayeSED and
 generates one-dimensional CSST GU, GV and GI slitless spectra under specified
@@ -93,6 +93,14 @@ one throughput value at each output-pixel center does not replace upstream integ
 Noise includes source/background Poisson fluctuations, dark current and Gaussian
 read noise. Spatial extraction pixels and exposures enter the noise-area
 calculation. Background-subtracted fluctuations can be negative and are retained.
+
+The packaged instrument reference uses GU/GV/GI outer ranges of 2550–4100,
+4000–6400 and 6200–10000 Angstrom, with central R values 287/232/207.
+The model derives a constant Gaussian FWHM per band and samples it with
+529/425/389 bins; central R is not assumed constant throughout a band.
+The [instrument-model guide](docs/INSTRUMENT_MODEL_251106917.md) documents the
+reference values, the adopted Gaussian R=300 template approximation, and GU's
+red-end resolution limit.
 
 Wavelength-calibration error (WCE) uses linear resampling on a common nominal grid,
 rather than a complete instrument wavelength-solution fit. Variance uses squared
@@ -312,10 +320,14 @@ host and does not distribute work across nodes with MPI.
 
 ## 9. Scientific limits
 
-- The input-template LSF defaults to `unknown`. Supply its shape and width from
-  the upstream library when available; nominal resolving power alone does not establish an LSF.
-- Upstream Gaussian FWHM uses `*_dlambda`; `*_Res` does not enter that operator.
-  Changing `*_Res` alone or treating FWHM as pixel spacing does not reconfigure resolution.
+- The packaged input-template model adopts Gaussian R=300 for the intended
+  BayeSED library. Other libraries need their own LSF setting. Default
+  `preserve` retains an overbroad template, including GU above about 3522.65
+  Angstrom, with an explicit warning that the requested target was not attained.
+- In the new instrument mode, `*_central_wl / *_Res` determines pre-pixel
+  Gaussian FWHM. Constant width across the band and four-pixel reference sampling
+  are explicit approximations. Legacy external configurations keep their earlier
+  fixed-width/grid conventions; read actual pixel geometry and model provenance.
 - The default sky is a fixed template. `background_v_mag` is a provenance label
   in that mode, not a standalone rescaling control or a time/solar-geometry zodiacal model.
 - Source morphology, aperture, PSF and template/instrument LSF need consistent
@@ -333,8 +345,10 @@ host and does not distribute work across nodes with MPI.
 - [Output layout and reader](docs/OUTPUT_LAYOUT.md)
 - [HDF5 desktop viewer](docs/VIEWER.md)
 - [Scientific models and limits](docs/SCIENCE_MODELS.md)
+- [Instrument reference, resolution, and sampling](docs/INSTRUMENT_MODEL_251106917.md)
 - [Morphology/MGE](docs/MGE_MODELS.md) and [bundle format](docs/MGE_BUNDLE_FORMAT.md)
 - [Gravity/PBS](scripts/gravity/README.md)
+- [Gravity catalogue arrays](scripts/gravity/ARRAY.md): per-file MzLS/DECaLS jobs, full-catalogue pilots, and recovery.
 - [Changelog](CHANGELOG.md) and [release notes](docs/RELEASE_NOTES_v0.9.0.md)
 - [MIT license](LICENSE) and [resource notice](RESOURCE_NOTICE.md)
 - [简体中文首页](README_zh-CN.md)

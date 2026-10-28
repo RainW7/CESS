@@ -10,6 +10,8 @@ English | [简体中文](README_zh-CN.md)
 
 The SEDs and galaxy parameters are arbitrary interface examples, not a calibrated physical population. Row 0 deliberately contains an invalid SED. Its ID and row are retained with `data_mask=2`; rows 1–3 contain simulated spectra.
 
+The bundled result uses scientific revision `20261027-D5` and the [declared instrument profile](../docs/INSTRUMENT_MODEL_251106917.md), with 529/425/389 GU/GV/GI bins. The synthetic input is an interface example, not a calibrated template library.
+
 ## Open the supplied files
 
 After [installing CESS](../docs/INSTALL.md), run from the repository root:

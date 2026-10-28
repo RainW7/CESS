@@ -118,7 +118,7 @@ def test_joint_fraction_and_finite_kernel_are_applied_once_to_counts_and_noise(t
     assert all(call['source_fraction'] == fraction and call['extraction_n_pixels'] == 3 for call in calls)
     with h5py.File(str(product), 'r') as handle:
         assert handle.attrs['schema_version'] == SCHEMA_VERSION == '2.5'
-        assert handle.attrs['cess_repair_revision'] == REPAIR_REVISION == '20261024-D4'
+        assert handle.attrs['cess_repair_revision'] == REPAIR_REVISION == '20261027-D5'
         description = json.loads(handle.attrs['profile_library_provenance_json'])
         assert description['version'] == 3 and description['provenance_status'] == 'positive_source_basis_verified'
         group = handle['mge_morphology']

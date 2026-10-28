@@ -14,6 +14,7 @@ from scipy.integrate import trapezoid
 import pytest
 from scipy.integrate import quad
 from scipy.special import ndtr
+from legacy_config import load_legacy_config
 
 
 CORE = Path(__file__).resolve().parents[1] / 'src'
@@ -33,8 +34,9 @@ def core():
 
 
 def simulator(core, template=None, policy='error'):
-    from cess.config.loader import load_config
-    config = load_config()
+    # These independent quadrature/legacy-grid oracles retain their explicit
+    # D4 settings; paper-profile tests exercise the new defaults separately.
+    config = load_legacy_config()
     config['template_lsf'] = {'mode': 'delta'} if template is None else template
     config['template_lsf_broader_policy'] = policy
     return core.emulator(config=config)

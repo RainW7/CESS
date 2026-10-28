@@ -459,6 +459,19 @@ Flag definitions, output units, and reader examples are in the [user guide](USER
 
 ## 13. Gravity / PBS jobs
 
+For large catalogue campaigns, use the [Gravity job arrays](../scripts/gravity/ARRAY.md).
+MzLS and DECaLS receive separate memory requests; each input has a one-CPU job and its own resume manifest.
+Activate the Python 3.12 `cess` environment on the server and run from the source root:
+
+```bash
+python -s -B scripts/gravity/catalogue_array.py prepare \
+  -i /path/to/CESS_input --run-dir /path/to/runs/cess_v090_all
+```
+
+The defaults require 1,385 files of each survey and generate `MzLS.pbs` and `DECaLS.pbs` without submitting.
+See the linked guide for full-file pilots, `qsub`, concurrency limits, and recovery.
+The `cess.pbs` entry point below is an alternative for a custom single-node batch; do not run both schemes on the same inputs at once.
+
 CESS `-j` controls process use; it does not request server CPU or memory resources.
 Request single-node resources according to the site's PBS rules, then configure matching CESS settings.
 For example, after receiving four CPUs on one node and checking that memory is sufficient, set all required absolute paths and scientific switches as described in the [Gravity guide](../scripts/gravity/README.md), then use:

@@ -7,6 +7,7 @@ or cess simulate --mode paired-wce. Original author: Run Wen.
 import sys
 from pathlib import Path
 import numpy as np
+from cess.instrument.spectral import window_indices
 import h5py
 from astropy.table import Table
 from collections.abc import Mapping
@@ -136,6 +137,8 @@ def simulate_file(input_path, hdf5filename, output_dir=None, config=None, option
         mask, mask_nan = prepared['mask'], prepared['mask_nan']
         band_data = prepared['bands']
         guwave, gvwave, giwave = [band_data[band]['wave'] for band in ('GU', 'GV', 'GI')]
+        gv_initial, gv_end = window_indices(context.config, 'GV', gvwave)
+        gi_initial, gi_end = window_indices(context.config, 'GI', giwave)
         gu_ujy, gv_ujy, gi_ujy = [band_data[band]['incident'] for band in ('GU', 'GV', 'GI')]
         gu_fnu, gv_fnu, gi_fnu = [band_data[band]['fnu'] for band in ('GU', 'GV', 'GI')]
         gu_source_rates, gv_source_rates, gi_source_rates = [band_data[band]['source_rates'] for band in ('GU', 'GV', 'GI')]
@@ -384,14 +387,14 @@ def simulate_file(input_path, hdf5filename, output_dir=None, config=None, option
             gi_intrinsic_lines = []
             # detect emission lines in both intrinsic and noisy spectra in GV and GI band
             for i in (range(len(f['ID'][:]))):
-                gv_noisy_lines.append(emulator.el_detect(gvwave,padded_data_dict['padded_gv_ujy_with_noise'][i],context.config['gv_init_idx'],context.config['gv_end_idx'],context.config['noisy_el_detect_th']))
-                gv_intrinsic_lines.append(emulator.el_detect(gvwave,gv_ujy[i],context.config['gv_init_idx'],context.config['gv_end_idx'],context.config['intri_el_detect_th']))
-                gi_noisy_lines.append(emulator.el_detect(giwave,padded_data_dict['padded_gi_ujy_with_noise'][i],context.config['gi_init_idx'],context.config['gi_end_idx'],context.config['noisy_el_detect_th']))
-                gi_intrinsic_lines.append(emulator.el_detect(giwave,gi_ujy[i],context.config['gi_init_idx'],context.config['gi_end_idx'],context.config['intri_el_detect_th']))
+                gv_noisy_lines.append(emulator.el_detect(gvwave,padded_data_dict['padded_gv_ujy_with_noise'][i],gv_initial,gv_end,context.config['noisy_el_detect_th']))
+                gv_intrinsic_lines.append(emulator.el_detect(gvwave,gv_ujy[i],gv_initial,gv_end,context.config['intri_el_detect_th']))
+                gi_noisy_lines.append(emulator.el_detect(giwave,padded_data_dict['padded_gi_ujy_with_noise'][i],gi_initial,gi_end,context.config['noisy_el_detect_th']))
+                gi_intrinsic_lines.append(emulator.el_detect(giwave,gi_ujy[i],gi_initial,gi_end,context.config['intri_el_detect_th']))
             # get the total emission line information array of intrinsic and noisy spectra
-            gv_noisy_wce_lines = [emulator.el_detect(gvwave, spectrum, context.config['gv_init_idx'], context.config['gv_end_idx'], context.config['noisy_el_detect_th'])
+            gv_noisy_wce_lines = [emulator.el_detect(gvwave, spectrum, gv_initial, gv_end, context.config['noisy_el_detect_th'])
                                   for spectrum in padded_data_dict['padded_gv_ujy_with_noise_wce']]
-            gi_noisy_wce_lines = [emulator.el_detect(giwave, spectrum, context.config['gi_init_idx'], context.config['gi_end_idx'], context.config['noisy_el_detect_th'])
+            gi_noisy_wce_lines = [emulator.el_detect(giwave, spectrum, gi_initial, gi_end, context.config['noisy_el_detect_th'])
                                   for spectrum in padded_data_dict['padded_gi_ujy_with_noise_wce']]
             _, _, gv_wce_details = emulator.el_success(gv_noisy_wce_lines, gv_intrinsic_lines, context.config['el_detect_success_th'], return_details=True)
             _, _, gi_wce_details = emulator.el_success(gi_noisy_wce_lines, gi_intrinsic_lines, context.config['el_detect_success_th'], return_details=True)
@@ -401,8 +404,8 @@ def simulate_file(input_path, hdf5filename, output_dir=None, config=None, option
             gv_el_flag = emission_flags(len(gv_noisy_lines), gv_intri_el['id'], gv_detect_el['id'])
             gi_el_flag = emission_flags(len(gi_noisy_lines), gi_intri_el['id'], gi_detect_el['id'])
             # Get the mean signal-to-noise ratio of each emission line within the given width (in index)
-            gv_el_snr = emulator.get_el_snr(padded_data_dict['padded_gv_snr'],gv_el_flag,gv_detect_el,context.config['gv_init_idx'],context.config['gv_elwidth'])
-            gi_el_snr = emulator.get_el_snr(padded_data_dict['padded_gi_snr'],gi_el_flag,gi_detect_el,context.config['gi_init_idx'],context.config['gi_elwidth'])
+            gv_el_snr = emulator.get_el_snr(padded_data_dict['padded_gv_snr'],gv_el_flag,gv_detect_el,gv_initial,context.config['gv_elwidth'])
+            gi_el_snr = emulator.get_el_snr(padded_data_dict['padded_gi_snr'],gi_el_flag,gi_detect_el,gi_initial,context.config['gi_elwidth'])
 
         # saveing data 
         parameters_desi, parameters_desi_names = desi_parameters(len(f['ID']),

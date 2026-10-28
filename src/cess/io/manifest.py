@@ -17,6 +17,7 @@ import h5py
 import numpy as np
 
 from cess.config.loader import load_config
+from cess.instrument.spectral import window_indices
 from cess.io.products import ProductView, open_product
 from cess.pipeline.random import STREAM_VERSION
 from cess.pipeline.support import (SourceSelection, normalise_options, simulation_filename,
@@ -227,7 +228,7 @@ def _peak_values(table):
 
 def _el_tables(handle, count, band, wave, config, flat=False, suffix='', covariance_known=True,
                missing_spectra=False, baseline_truth=None):
-    initial, end = config[band.lower() + '_init_idx'], config[band.lower() + '_end_idx']
+    initial, end = window_indices(config, band, wave)
     tables = _flat_measurements(handle, band, suffix, count, wave, config,
                                 covariance_known, missing_spectra)
     if baseline_truth is not None:

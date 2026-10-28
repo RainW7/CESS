@@ -459,6 +459,19 @@ CESS拒绝覆盖同名科学产品，包括已有目标路径或符号链接；�
 
 ## 13. Gravity / PBS运行
 
+大量独立星表推荐使用 [Gravity 作业数组](../scripts/gravity/ARRAY_zh-CN.md)：
+按 MzLS/DECaLS 分别申请内存，每个文件使用一个 1 CPU 子作业，并保留独立恢复清单。
+在服务器激活 Python 3.12 的 `cess` 环境，进入 CESS 源码目录后：
+
+```bash
+python -s -B scripts/gravity/catalogue_array.py prepare \
+  -i /path/to/CESS_input --run-dir /path/to/runs/cess_v090_all
+```
+
+默认核对各 1,385 个文件，生成 `MzLS.pbs` 和 `DECaLS.pbs`；不自动提交。
+完整文件试跑、全量 `qsub`、并发限制和失败恢复见上述指南。
+以下 `cess.pbs` 是另一个适合单节点自定义批次的入口，不要与数组方案叠加启动同一批输入。
+
 CESS的 `-j` 只决定程序使用的进程数，不替代服务器申请CPU/内存。
 先按本站PBS规则申请单节点资源，再设置匹配的CESS参数。
 例如已经获得同一节点4个CPU并确认内存足够时，在按[Gravity说明](../scripts/gravity/README_zh-CN.md)设置好所有绝对路径和科学开关后：

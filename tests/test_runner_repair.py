@@ -132,7 +132,7 @@ def test_el_postprocess_does_not_invent_input_noise_provenance(tmp_path):
         with atomic_hdf5(target) as handle:
             record_runner_provenance(handle, {}, {}, source=source)
     with h5py.File(str(target), 'r') as handle:
-        assert handle.attrs['cess_repair_revision'] == '20261024-D4'
+        assert handle.attrs['cess_repair_revision'] == '20261027-D5'
         assert handle.attrs['noise_model'].startswith('unknown')
         assert handle.attrs['wce_model'].startswith('unknown')
         for name in ('spectral_response_algorithm', 'spectral_response_quantity',
@@ -156,7 +156,7 @@ def test_zero_source_output_keeps_spectral_axes(tmp_path, monkeypatch, module):
             width = len(handle[band + '/wave'])
             for name in ('flux_ujy', 'flux_ujy_with_noise', 'ferr', 'snr'):
                 assert handle[band + '/' + name].shape == (0, width)
-        assert handle.attrs['cess_repair_revision'] == '20261024-D4'
+        assert handle.attrs['cess_repair_revision'] == '20261027-D5'
 
 
 def test_paired_invalid_wce_rows_align(tmp_path, monkeypatch):
@@ -388,7 +388,7 @@ def test_photon_bin_metadata_and_exact_center_derived_edges(tmp_path):
             'apply_wavelength_calibration_error': False,
             'apply_photometric': False, 'apply_el_detect': False})
     with h5py.File(str(target), 'r') as handle:
-        assert handle.attrs['cess_repair_revision'] == '20261024-D4'
+        assert handle.attrs['cess_repair_revision'] == '20261027-D5'
         assert handle.attrs['schema_version'] == '2.5'
         assert handle.attrs['spectral_convolution_algorithm'] == 'cess-photon-bin-gauss-v1'
         assert 'fnu_eff=lambda_center*Q/pixel_width' in handle.attrs['spectral_quantity']
@@ -436,7 +436,7 @@ def test_el_postprocessing_inherits_parent_spectral_semantics_and_future_notes(t
     with h5py.File(str(target), 'r') as handle:
         for name, value in inherited.items():
             assert handle.attrs[name] == value
-        assert handle.attrs['cess_repair_revision'] == '20261024-D4'
+        assert handle.attrs['cess_repair_revision'] == '20261027-D5'
 
 
 def test_response_products_keep_detector_counts_separate_from_calibration(tmp_path):

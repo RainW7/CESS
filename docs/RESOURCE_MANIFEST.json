@@ -76,8 +76,10 @@
       "sha256": "ca4802682d8d514f44c9580ff72bfa76f800d7b7f8c668eb4e7b94d35efdeb73"
     },
     "emulator_parameters.json": {
-      "bytes": 3693,
-      "sha256": "524e3d98d1e3779a72456ccbb11a662078941ddb600151820fa90f341dae4a34"
+      "bytes": 5780,
+      "sha256": "9361c4e93cf7c271165e81fb6bba3704cdb55ba8afa8248a817bba01eb9dbe39"
     }
-  }
+  },
+  "configuration_updated_on": "2026-10-28",
+  "configuration_revision": "20261027-D5"
 }

@@ -8,6 +8,7 @@ import json
 import os
 import h5py
 import numpy as np
+from cess.instrument.spectral import target_fwhm, output_wavelengths, window_indices
 from cess.contracts import (SCHEMA_VERSION, REPAIR_REVISION, COVARIANCE_MODEL,
     MGE_MORPHOLOGY_FIELDS, MGE_MORPHOLOGY_ATTRIBUTES, LINE_MEASUREMENT_DTYPE)
 
@@ -287,8 +288,8 @@ def write_line_measurements(parent, emulator, noisy_lines, intrinsic_lines,
     width = design['line_width_pixels'][band]
     side = design['sideband_width_pixels']
     gap = design['sideband_gap_pixels']
-    initial = parameters[band.lower() + '_init_idx']
     wave = np.asarray(source['wave'][:], dtype=float)
+    initial, _ = window_indices(parameters, band, wave)
     required = ('flux_ujy_with_noise' + suffix, 'ferr' + suffix)
     missing_spectra = any(name not in source for name in required)
     covariance_name = 'covariance_lag1' + suffix
@@ -405,6 +406,30 @@ def write_line_measurements(parent, emulator, noisy_lines, intrinsic_lines,
 def _spectral_provenance(parameters):
     """Describe the photon-bin contract without asserting a measured input LSF."""
     template = parameters.get('template_lsf', {'mode': 'unknown'})
+    central_model = parameters.get('instrument_lsf', {}).get('mode') == 'central_resolving_power'
+    target_widths = {}
+    for band in ('GU', 'GV', 'GI'):
+        keys = ((band.lower() + '_central_wl', band.lower() + '_Res') if central_model
+                else (band.lower() + '_dlambda',))
+        # Metadata-only consumers can legitimately provide a partial config.
+        # Omission is unknown; explicitly supplied invalid widths still raise.
+        target_widths[band] = target_fwhm(parameters, band) if all(key in parameters for key in keys) else None
+    comparison = {'scope': 'declared pre-pixel Gaussian widths; excludes morphology and pixel response',
+                  'template_mode': template['mode']}
+    if template['mode'] == 'resolving_power':
+        comparison['bands'] = {}
+        for band in ('GU', 'GV', 'GI'):
+            prefix = band.lower()
+            if (target_widths[band] is None or prefix + '_min_wl' not in parameters or
+                    prefix + '_max_wl' not in parameters):
+                comparison['bands'][band] = {'status': 'unknown; complete band metadata not recorded'}
+                continue
+            low, high = parameters[prefix + '_min_wl'], parameters[prefix + '_max_wl']
+            crossing = target_widths[band] * template['value']
+            comparison['bands'][band] = {
+                'template_broader_above_observed_Angstrom': crossing,
+                'overbroad_band_interval_Angstrom': [max(low, crossing), high] if crossing < high else None,
+                'preserve_definition': 'no additional instrumental broadening where input is broader; narrower target not attained'}
     return {
         'spectral_convolution_algorithm': 'cess-photon-bin-gauss-v1',
         'spectral_quantity': (
@@ -457,11 +482,22 @@ def _spectral_provenance(parameters):
         'template_lsf_json': json.dumps(template, sort_keys=True),
         'template_lsf_nominal_evidence_json': json.dumps(
             parameters.get('template_lsf_nominal_evidence', {'status': 'not recorded'}), sort_keys=True),
+        'template_lsf_assumption_json': json.dumps(
+            parameters.get('template_lsf_assumption', {'status': 'not separately recorded'}), sort_keys=True),
         'template_lsf_broader_policy': parameters.get('template_lsf_broader_policy', 'error'),
         'spectral_target_lsf_json': json.dumps({
             'family': 'Gaussian', 'stage': 'pre-pixel', 'frame': 'observed',
-            'fwhm_Angstrom': {band: parameters.get(band.lower() + '_dlambda')
-                              for band in ('GU', 'GV', 'GI')}}, sort_keys=True),
+            'model': parameters.get('instrument_lsf', {'mode': 'fixed_fwhm'}),
+            'central_wavelength_Angstrom': {band: parameters.get(band.lower() + '_central_wl')
+                                            for band in ('GU', 'GV', 'GI')},
+            'central_resolving_power': {band: parameters.get(band.lower() + '_Res')
+                                       for band in ('GU', 'GV', 'GI')},
+            'fwhm_Angstrom': target_widths}, sort_keys=True),
+        'spectral_sampling_json': json.dumps(
+            parameters.get('spectral_sampling', {'mode': 'legacy'}), sort_keys=True),
+        'spectral_instrument_reference_json': json.dumps(
+            parameters.get('instrument_reference', {'status': 'not recorded'}), sort_keys=True),
+        'spectral_template_target_comparison_json': json.dumps(comparison, sort_keys=True),
         'spectral_final_lsf_definition': (
             'unknown physical final LSF when template mode is unknown; otherwise '
             'conditional on declared template LSF and broader policy; pixel '
@@ -520,6 +556,32 @@ def record_runner_provenance(handle, parameters, switches, source=None, seed=Non
                 handle.attrs[name] = source.attrs[name]
     handle.attrs['schema_layout'] = 'all parameter tables use source,field'
     handle.attrs['config_json'] = json.dumps(parameters, sort_keys=True)
+    windows = {}
+    wavelength_window = parameters.get('spectral_window', {}).get('mode') == 'bandpass'
+    for band in ('GU', 'GV', 'GI'):
+        if band not in handle:
+            continue
+        if 'wave' in handle[band]:
+            wave_source = handle[band]
+        elif source is not None and band in source and 'wave' in source[band]:
+            # EL-only outputs contain tables, not duplicate parent spectra.
+            # Their analysis interval must still refer to the actual parent
+            # grid used for detection, not the new simulation's nominal grid.
+            wave_source = source[band]
+        else:
+            continue
+        suffixes = ('min_wl', 'max_wl') if wavelength_window else ('init_idx', 'end_idx')
+        if all(band.lower() + '_' + suffix in parameters for suffix in suffixes):
+            windows[band] = dict(zip(('start_index', 'stop_index'), window_indices(
+                parameters, band, np.asarray(wave_source['wave'][:], dtype=float))))
+        else:
+            windows[band] = {'status': 'unknown; analysis interval not recorded'}
+    handle.attrs['analysis_window_json'] = json.dumps(windows, sort_keys=True)
+    handle.attrs['analysis_nonfinite_edge_policy'] = (
+        'bandpass line detection trims only leading/trailing nonfinite flux bins; '
+        'peak indexes retain the original window offset; internal nonfinite gaps reject the window'
+        if parameters.get('spectral_window', {}).get('mode') == 'bandpass' else
+        'explicit index window must be finite throughout')
     handle.attrs['switches_json'] = json.dumps(switches, sort_keys=True)
     for name, value in switches.items():
         handle.attrs[name] = bool(value)

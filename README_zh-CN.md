@@ -4,7 +4,7 @@
 
 **CSST Emulator for Slitless Spectroscopy — CSST 一维无缝光谱模拟器**
 
-版本：v0.9.0 · Python 3.12
+版本：v0.9.0 · 科学 revision `20261027-D5` · Python 3.12
 
 CESS 读取 BayeSED 生成的星系光谱模板和星表，在给定的仪器响应、观测条件及形态模型下，
 快速生成 GU、GV、GI 三个波段的一维模拟无缝光谱。它面向需要处理大量星系的研究任务：
@@ -97,6 +97,11 @@ rest 波长 → 观测波长；光谱平滑与像元积分
 输入波长由 μm 转换为 Å，并按输入红移映射到观测系。输入 SED 的流量归一化沿用现有
 BayeSED 库约定；不要把任意本征光度谱直接当作 μJy 输入。源响应采用波长积分，
 不能用最终输出像元中心的一个 throughput 数值代替所有上游响应计算。
+
+随包仪器参考采用 GU/GV/GI 波长外边界 2550–4100、4000–6400、6200–10000 Å，
+中央R分别为287/232/207。模型按中央值推导各波段恒定的Gaussian FWHM，输出529/425/389个bin；
+没有将中央R直接当作全带恒定R。[仪器模型指南](docs/INSTRUMENT_MODEL_251106917_zh-CN.md)
+说明参考来源、采用的Gaussian R=300模板近似，以及GU红端的分辨率限制。
 
 ### 3.2 噪声、波长误差和信噪比
 
@@ -327,9 +332,11 @@ CPU和内存资源仍需通过服务器实际支持的PBS指令申请。当前�
 
 目前适合在明确近似下进行快速一维样本模拟。使用时尤其应确认：
 
-- 输入模板的 LSF 默认保持 `unknown`。已知标称分辨率并不能自动确定其线展宽形状，需根据模板库元数据设置。
-- 当前上游 Gaussian 光谱 FWHM 由 `*_dlambda` 控制，`*_Res` 数字不参与该算子；
-  不应仅修改 `*_Res` 就认为完成了分辨率重配置，也不应把 `*_dlambda` 直接等同于最终输出采样间隔。
+- 随包输入模板模型为所用BayeSED库采用Gaussian R=300；其他库须另行设置LSF。
+  默认`preserve`保留比目标更宽的模板，包括GU约3522.65 Å以上区域，并明确提示目标未达到。
+- 新仪器模式按`*_central_wl / *_Res`决定像元积分前的Gaussian FWHM。
+  全带恒定宽度与参考四像元采样是显式近似；旧外部配置仍保留早期固定宽度/网格约定。
+  应读取实际像元几何与模型provenance。
 - 默认背景采用固定模板；`background_v_mag` 在该模式中是来源标签，不能单独改变它来重标定背景。
   当前没有按观测时间和太阳相对几何标定的黄道光模型。
 - 延展源形态、有限孔径、PSF、模板LSF与仪器LSF需采用一致定义。MGE/strip 模式仍含
@@ -345,8 +352,10 @@ CPU和内存资源仍需通过服务器实际支持的PBS指令申请。当前�
 - [输出布局说明](docs/OUTPUT_LAYOUT_zh-CN.md)：schema3.0、统一reader与转换约定。
 - [HDF5桌面浏览器](docs/VIEWER_zh-CN.md)：结构、逐源光谱、通用绘图和导出。
 - [科学模型与适用边界](docs/SCIENCE_MODELS_zh-CN.md)及[形态/MGE 模型](docs/MGE_MODELS_zh-CN.md)。
+- [仪器参考、分辨率与采样](docs/INSTRUMENT_MODEL_251106917_zh-CN.md)：参考来源、有效参数、模板假设与兼容行为。
 - [Python3.12环境与复现](docs/INSTALL_zh-CN.md)。
 - [Gravity操作说明](scripts/gravity/README_zh-CN.md)：用户预检、服务器资源设置和qsub。
+- [Gravity批量星表作业](scripts/gravity/ARRAY_zh-CN.md)：按文件分发的 MzLS/DECaLS 作业数组、完整文件试跑及失败恢复。
 - [版本变化](CHANGELOG_zh-CN.md)。
 - [MIT 许可证](LICENSE)与[随包资源说明](RESOURCE_NOTICE_zh-CN.md)。
 

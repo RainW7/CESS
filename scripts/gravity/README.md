@@ -2,7 +2,31 @@
 
 [English](README.md) | [简体中文](README_zh-CN.md)
 
-These scripts run CESS on a PBS compute node. Preflight expects `0.9.0 / 20261024-D4`; deploy that source version in a Python 3.12 Linux environment and run preflight before submitting a job.
+For thousands of independent catalogues, use the [whole-file job-array workflow](ARRAY.md), with survey-specific memory requests and a separate output, log, and resume manifest for each input. The `cess.pbs` workflow below is for smaller single-node batches with user-configured resources.
+
+These scripts run CESS on a PBS compute node. Preflight expects `0.9.0 / 20261027-D5`; deploy that source version in a Python 3.12 Linux environment and run preflight before submitting a job.
+
+## Deploy the D5 source package
+
+Upload the D5 `cess-0.9.0.tar.gz` and its matching `SHA256SUMS` to a separate deployment directory on the server. The package version remains 0.9.0: check the scientific revision when upgrading, because the filename alone does not distinguish D4 from D5. Run these commands from the directory containing the archive:
+
+```bash
+sha256sum --check --ignore-missing SHA256SUMS
+tar -xzf cess-0.9.0.tar.gz
+cd cess-0.9.0
+conda create -n cess python=3.12 pip -y  # Only when creating the environment for the first time.
+conda activate cess
+python -m pip install .
+python -c 'from cess.contracts import REPAIR_REVISION; print(REPAIR_REVISION)'
+```
+
+The last command must print `20261027-D5`. In an environment with CESS already installed, replace the installation command with `python -m pip install --force-reinstall --no-deps .`, provided the existing dependencies meet the requirements; then run `python -m pip check`. Wait for running jobs to finish before replacing their source or environment. Do not copy a Mac Conda environment to Linux.
+
+`cess-gravity-D5-20261028.tar.gz` is a portable Gravity bundle of the same source, extracted into `CESS-v0.9.0-D5`; enter that directory to use the same installation commands. It includes the resources, examples, documentation, and job scripts, so no older morphology libraries or throughput files are needed.
+
+D5 updates the three band ranges, central resolving powers, and output sampling; see the [instrument model](../../docs/INSTRUMENT_MODEL_251106917.md). The default BayeSED template is treated as Gaussian R=300, retaining and warning about the broader template at the red end of GU under `preserve`. A D4 manifest cannot resume a D5 run: follow the [array guide](ARRAY.md) to `prepare` a fresh directory and pilot one complete file per survey. Interrupted D5 jobs can still resume using their original manifests.
+
+## Single-node preflight and small batches
 
 `preflight.sh` performs read-only checks of Python 3.12, imported source location, version/revision, configuration, and resource readability, then invokes the actual CLI dry-run. It does not validate instrument science models or establish that every input row is valid. `cess.pbs` executes the simulation, creates a new manifest for an initial run, retains logs and the resume manifest on failure, and propagates failure status. The CLI refuses to overwrite existing products.
 
@@ -16,7 +40,7 @@ export CESS_CONFIG=/path/to/config/emulator_parameters.json
 export CESS_INPUT=/path/to/data/catalogue_001.hdf5
 export CESS_OUTPUT=/path/to/results/run001/catalogue_001
 export CESS_MANIFEST=/path/to/manifests/run001/catalogue_001.json
-export CESS_EXPECTED_VERSION=0.9.0 CESS_EXPECTED_REVISION=20261024-D4
+export CESS_EXPECTED_VERSION=0.9.0 CESS_EXPECTED_REVISION=20261027-D5
 export CESS_CPUS=1 CESS_WORKERS=1 CESS_SEED=1214
 unset CESS_CHUNK_SIZE CESS_MEMORY_BUDGET_GIB
 export CESS_MODE=standard CESS_OUTPUT_LAYOUT=structured CESS_RESUME=0
@@ -57,21 +81,16 @@ A directory batch shares one dedicated manifest. The current implementation rewr
 
 A new-run preview intentionally omits `--manifest` because the CLI creates a manifest for a new `--dry-run --manifest` invocation. This preview creates no directories, manifests, or scientific products. It is not equivalent to every output-conflict/input-hash check performed during execution; the actual CLI still checks and refuses overwrites. The preview reads catalogue metadata and checks resource readability without loading all scientific inputs/resources.
 
-After confirming the server's PBS flavour, available queues, memory, and walltime syntax, add **one** resource-request style to the `cess.pbs` header. Replace the angle-bracket placeholders. Do not combine the two examples or submit them unchanged:
+The [Gravity job guide](https://jupyter.gravity.sjtu.edu.cn/doc/#/Basic/Job) uses PBS/Torque. For a small batch, add the following directives to the `cess.pbs` header with actual resource values. Check current queue limits using `qstat -q` and `qstat -f -Q`:
 
 ```text
-# Torque-style example; confirm with the site:
-#PBS -q <queue>
+# Torque; replace the CPU, memory, and walltime placeholders before submission.
+#PBS -q normal
 #PBS -l nodes=1:ppn=<allocated_cpus>
 #PBS -l mem=<memory>,walltime=<HH:MM:SS>
-
-# PBS Pro/OpenPBS-style example; confirm with the site:
-#PBS -q <queue>
-#PBS -l select=1:ncpus=<allocated_cpus>:mem=<memory>
-#PBS -l walltime=<HH:MM:SS>
 ```
 
-After confirming site syntax, the user submits with `qsub`. For example, if the site permits exporting the submission environment:
+After filling in the resource header and completing preflight, submit with `qsub`. This small-batch template needs the environment variables set above, for example:
 
 ```bash
 qsub -V "$CESS_REPO/scripts/gravity/cess.pbs"

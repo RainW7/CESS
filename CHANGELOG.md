@@ -4,6 +4,17 @@
 
 ## v0.9.0
 
+### Scientific revision 20261027-D5
+
+- Update the packaged GU/GV/GI wavelength ranges and central resolving powers
+  from Table 1 of arXiv:2511.06917v2. The constant-FWHM Gaussian response and
+  four-pixel sampling are explicit one-dimensional approximations.
+- Adopt a Gaussian R=300 input-template model; preserve an already broader GU
+  template without sharpening, and derive analysis windows from actual wavelengths.
+  See the [instrument model](docs/INSTRUMENT_MODEL_251106917.md) for assumptions.
+- Keep package version `0.9.0`, but distinguish this scientific revision from
+  earlier D4 products. Recalculate into a new output directory with a new manifest.
+
 ### Installation and operation
 
 - Package the one-dimensional simulator as `src/cess` for Python 3.12.

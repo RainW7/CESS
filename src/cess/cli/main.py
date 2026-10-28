@@ -66,10 +66,8 @@ def discover_inputs(specifications, default_directory=None):
 
 def estimate_peak_gib(config, rows, spectral_length, parameter_columns):
     """Approximate working memory for scheduling, not a measured upper bound."""
-    pixels = sum(round((int((config[b + "_end_wl"] - config[b + "_start_wl"]) /
-                               config[b + "_dlambda"]) + 1) *
-                       config[b + "_ree80"] / config["arcsecperpix"])
-                 for b in ("gu", "gv", "gi"))
+    from cess.instrument.spectral import output_pixel_count
+    pixels = sum(output_pixel_count(config, band) for band in ("GU", "GV", "GI"))
     # Include input copies, parameters, many spectral products and headroom.
     per_row = 8 * (3 * spectral_length + parameter_columns + 20 * pixels)
     return (1.5 * rows * per_row + 160 * 1024 ** 2) / 1024 ** 3

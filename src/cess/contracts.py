@@ -4,7 +4,7 @@ import numpy as np
 
 SCHEMA_VERSION = '2.5'
 
-REPAIR_REVISION = '20261024-D4'
+REPAIR_REVISION = '20261027-D5'
 
 COVARIANCE_MODEL = 'independent-extracted-bins-linear-shift-v1'
 

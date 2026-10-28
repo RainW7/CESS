@@ -2,7 +2,7 @@
 
 [English](SCIENCE_MODELS.md) | [简体中文](SCIENCE_MODELS_zh-CN.md)
 
-This document describes the models used by the current implementation. Parameters make the calculation reproducible; releasing the software does not make them an independently calibrated official CSST instrument model. See the [command guide](COMMANDS.md) for routine execution and the [output layout](OUTPUT_LAYOUT.md) for stored fields.
+This document describes scientific revision `20261027-D5` of CESS `0.9.0`. Parameters make the calculation reproducible; releasing the software does not make them an independently calibrated official CSST instrument model. See the [command guide](COMMANDS.md) for routine execution and the [output layout](OUTPUT_LAYOUT.md) for stored fields.
 
 ## 1. Inputs and units
 
@@ -22,7 +22,11 @@ A is the collecting area used in the calculation; wavelength and its integration
 
 Output `flux_ujy` is a photon-equivalent bin flux density under the adopted pixel definition. It cannot unconditionally be treated as a continuous-function point value at an arbitrary wavelength. Photon accounting uses the corresponding `pixel_width/wave` weights; shared `wave_edges` and `pixel_width` specify the geometry. Losses at finite passbands, kernel windows, and detector boundaries must remain in the calculation.
 
-The upstream instrumental Gaussian FWHM is controlled by `gu_dlambda/gv_dlambda/gi_dlambda`, with packaged values of 15/21/33 Angstrom. The values of `gu_Res/gv_Res/gi_Res` do not participate in this operator; changing only those numbers does not change the simulated resolution. Output pixel spacing is also not interchangeable with these FWHM values: read the actual output grid.
+The packaged instrument reference uses the central wavelengths and central resolving powers in Table 1 of [Zhang et al., arXiv:2511.06917v2](https://arxiv.org/html/2511.06917#S2). GU/GV/GI output edges are 2550–4100 / 4000–6400 / 6200–10000 Angstrom. With `instrument_lsf.mode=central_resolving_power`, `*_central_wl` and `*_Res` now determine the target Gaussian FWHM as `central_wl/Res`: approximately 11.74216 / 22.62931 / 39.13043 Angstrom.
+
+The explicit `wavelength_law=constant_fwhm` extends that reference width within each band; the paper specifies R at the central wavelength and does not establish a constant R throughout the band. A Gaussian instrumental profile and this extension are CESS one-dimensional approximations. The paper does not resolve the LSF's pixel/PSF decomposition. Consequently, target Gaussian widths are not a certification of the final pixel-integrated, morphology-broadened resolution. The [instrument-model description](INSTRUMENT_MODEL_251106917.md) separates reference data, derivations, and retained assumptions.
+
+Default `spectral_sampling.mode=resolution_elements` requests four pixels per reference resolution element. The operator uses `ceil(band_span/(FWHM/4))` bins and keeps the exact band edges, producing 529 / 425 / 389 bins for GU/GV/GI. Actual bin widths are approximately 2.93006 / 5.64706 / 9.76864 Angstrom; read `wave_edges` and `pixel_width` rather than equating sampling with FWHM. Default `spectral_window.mode=bandpass` selects detector/S/N and emission-line domains from the actual wavelength grid. Older external configurations without these model keys retain their fixed-`*_dlambda`, historical grid, and index-window behavior.
 
 `template_lsf` is independent of wavelength sampling:
 
@@ -33,7 +37,9 @@ The upstream instrumental Gaussian FWHM is controlled by `gu_dlambda/gv_dlambda/
 | `resolving_power` | An explicit Gaussian approximation and positive R value, used to match the additional broadening required in the observed frame. |
 | `fwhm_rest` | An explicit rest-frame Gaussian FWHM in Angstrom. |
 
-The confirmed nominal R=300 of the existing templates is provenance information; it does not by itself establish that their detailed LSF is Gaussian. The packaged default remains `unknown`. Templates broader than the target are handled explicitly through `template_lsf_broader_policy=error/preserve`; silently sharpening them or clipping a negative variance to zero does not establish a successful match.
+The packaged template model is `resolving_power` with `value=300.0`, adopting the user's explicit Gaussian R=300 approximation for this BayeSED library. This assumption was selected for CESS on 2026-10-27; it is not established by the instrument-reference paper. A different input library requires its own template-LSF setting.
+
+The default `template_lsf_broader_policy=preserve` adds no extra instrumental broadening where a template is already wider than the target, and reports that the requested target was not attained. In particular, the adopted R=300 template is broader than the GU reference above approximately 3522.65 Angstrom. It is retained there, not deconvolved or marked as a successful match. The alternative `error` policy rejects such a calculation. Template LSF describes upstream numerical/instrumental smoothing; intrinsic astrophysical line widths must not be subtracted as a template response.
 
 ## 3. Source morphology, PSF, and aperture
 
@@ -75,8 +81,8 @@ Model magnitudes, noisy observations, statistical/systematic errors, S/N, and de
 
 In standard mode, `/zero_order` contains passband-integrated photometry. The historical `_0th` suffix on spectral arrays denotes an existing one-dimensional diagnostic proxy, not a real two-dimensional zeroth-order image on a CCD. Version 0.9.0 does not simulate two-dimensional spectral overlap or contamination between sources.
 
-The emission-line module distinguishes intrinsic peaks, noisy candidates, matches, false positives, and missed peaks. Window line fluxes and S/N use an affine sideband continuum and the current covariance model. A candidate peak is not automatically an identified atomic transition. Fixed windows may miss line wings or include neighboring lines; choosing centers from the same noisy data also introduces selection/centering bias. Window S/N is neither an independent detection significance nor an empirical certification of completeness or contamination.
+The emission-line module distinguishes intrinsic peaks, noisy candidates, matches, false positives, and missed peaks. Window line fluxes and S/N use an affine sideband continuum and the current covariance model. A candidate peak is not automatically an identified atomic transition. The configured 40-pixel line windows and 20-pixel sidebands remain analysis choices; their physical widths follow the actual output grid and are not calibrated by the instrument paper. Fixed windows may miss line wings or include neighboring lines; choosing centers from the same noisy data also introduces selection/centering bias. Window S/N is neither an independent detection significance nor an empirical certification of completeness or contamination.
 
 ## 6. Research use
 
-Record the software version, input SHA, effective configuration, random seed, and relevant field definitions in research applications. Validate the PSF/LSF, response, background, aperture, sensitivity, and selection function for the intended study.
+Record the software version, scientific revision, input SHA, effective configuration, random seed, and relevant field definitions in research applications. Validate the PSF/LSF, response, background, aperture, sensitivity, and selection function for the intended study. A manifest created under an earlier scientific revision cannot resume a D5 calculation; retain old products and prepare a new output/manifest or Gravity run directory.

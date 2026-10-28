@@ -12,6 +12,7 @@ import numpy as np
 from scipy.integrate import trapezoid
 import pytest
 from astropy.io import fits
+from legacy_config import legacy_config_mapping
 
 CORE = Path(__file__).resolve().parents[1] / 'src'
 
@@ -46,7 +47,10 @@ def core():
 
 @pytest.fixture
 def baseline(configuration):
-    return configuration.load_config(configuration.DEFAULT_CONFIG_PATH)
+    # Legacy-field validation/isolation tests must not implicitly opt into
+    # derived paper-profile widths or wavelength-based analysis windows.
+    return configuration.validate_config(legacy_config_mapping(),
+                                         base_dir=configuration.DEFAULT_CONFIG_PATH.parent)
 
 
 def test_imports_without_configuration_or_fits_from_arbitrary_cwd(tmp_path):

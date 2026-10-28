@@ -10,6 +10,7 @@ import numpy as np
 from cess.constants import h
 import cess.spectra.units as utils
 from cess.spectra.integration import bin_edges, convolve_to_bins, response_curve
+from cess.instrument.spectral import target_fwhm, output_wavelengths, MAX_SPECTRAL_PIXELS
 
 
 class SpectraMixin:
@@ -17,9 +18,10 @@ class SpectraMixin:
         """Validate SED arrays and return the legacy resolution-element grid.
 
         Inputs are rest wavelength (n_wave,), observed-normalized fnu
-        (n_source,n_wave), redshift (n_source,) and GU/GV/GI. This coarse grid
-        now defines only the unchanged output pixel count; SEDs are never sampled
-        on it. The second return is the requested instrumental sigma in observed
+        (n_source,n_wave), redshift (n_source,) and GU/GV/GI. SEDs are never sampled
+        on this coarse grid. Only legacy output sampling uses its pixel count;
+        explicit resolution-element sampling is defined separately. The second
+        return is the requested instrumental sigma in observed
         Angstrom, not a template-corrected width. Per-source template corrections
         are computed by kernels_convolve. Final returns are valid/invalid row
         masks; wavelength coverage is checked later by kernels_convolve.
@@ -28,20 +30,23 @@ class SpectraMixin:
         if grism == 'GU':
             start_wl = self.config['gu_start_wl']
             end_wl = self.config['gu_end_wl']
-            delta_lambda = self.config['gu_dlambda']
+            delta_lambda = target_fwhm(self.config, grism)
         elif grism == 'GV':
             start_wl = self.config['gv_start_wl']
             end_wl = self.config['gv_end_wl']
-            delta_lambda = self.config['gv_dlambda']
+            delta_lambda = target_fwhm(self.config, grism)
         elif grism == 'GI':
             start_wl = self.config['gi_start_wl']
             end_wl = self.config['gi_end_wl']
-            delta_lambda = self.config['gi_dlambda']
+            delta_lambda = target_fwhm(self.config, grism)
         else:
             raise ValueError('Invalid grism, please input GU, GV, or GI.')
 
         # obtain the numbers of spectral resolution units based on mean delta lambda
-        N = int((end_wl - start_wl) / delta_lambda) + 1
+        coarse_count = (end_wl - start_wl) / delta_lambda
+        if not np.isfinite(coarse_count) or coarse_count + 1 > MAX_SPECTRAL_PIXELS:
+            raise ValueError('Coarse spectral grid exceeds the maximum supported pixel count.')
+        N = int(coarse_count) + 1
         # generate an array for spectral resolution unit based on the grism resolution in the corresponding wavelength range
         spectral_unit_wavelength = np.array([start_wl + i * delta_lambda for i in range(N)])
 
@@ -79,7 +84,7 @@ class SpectraMixin:
         preserve explicitly keeps an overbroad input instead of deconvolving it.
         """
         wavelengths = np.asarray(wavelengths, dtype=float)
-        target = self.config[grism.lower() + '_dlambda']
+        target = target_fwhm(self.config, grism)
         model = self.config['template_lsf']
         mode = model['mode']
         if mode == 'unknown':
@@ -147,14 +152,11 @@ class SpectraMixin:
         redshift = np.asarray(redshift, dtype=float)
         if not np.isfinite(fwhm) or fwhm <= 0:
             raise ValueError('fwhm must be finite and positive, in arcsec.')
-        n_pixel = round(len(coarse_wave) * fwhm / self.config['arcsecperpix'])
-        if n_pixel < 2:
-            raise ValueError('fwhm/arcsecperpix produces fewer than two spectral pixels.')
+        new_wave = output_wavelengths(self.config, grism, fwhm_arcsec=fwhm)
+        n_pixel = len(new_wave)
         prefix = grism.lower()
-        new_wave = np.linspace(self.config[prefix + '_min_wl'],
-                               self.config[prefix + '_max_wl'], n_pixel)
         edges = bin_edges(new_wave)
-        target_sigma = self.config[prefix + '_dlambda'] / 2.3548200450309493
+        target_sigma = target_fwhm(self.config, grism) / 2.3548200450309493
         # Use a conservative common support also for zero additional broadening.
         # Restrict LSF validity checks to the region that can feed these pixels.
         support = (edges[0] - 8. * target_sigma, edges[-1] + 8. * target_sigma)

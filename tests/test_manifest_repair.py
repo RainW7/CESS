@@ -184,6 +184,10 @@ def populated_product(tmp_path, mode='paired-wce', legacy_parent=False):
     from cess.spectra.integration import bin_edges
     job, _ = fixture_job(tmp_path, mode)
     job['options']['el_detect'] = True
+    # This writer/peak-ID fixture deliberately supplies the same tiny arbitrary
+    # 4000--4100-A grid for GV and GI. Its synthetic peak indexes are explicit;
+    # do not reinterpret them as the modern physical bandpass window.
+    job['config']['spectral_window'] = {'mode': 'indices'}
     for band in ('gv', 'gi'):
         job['config'][band + '_init_idx'], job['config'][band + '_end_idx'] = 0, 11
     job['config']['line_measurement'] = dict(line_width_pixels=dict(GV=3, GI=3),

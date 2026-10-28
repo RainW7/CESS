@@ -2,7 +2,7 @@
 
 [English](USER_GUIDE.md) | [简体中文](USER_GUIDE_zh-CN.md)
 
-Updated 2026-10-26. This guide applies to CESS `0.9.0`, revision `20261024-D4`.
+Updated 2026-10-28. This guide applies to CESS `0.9.0`, scientific revision `20261027-D5`.
 
 The [README](../README.md) describes the software, capabilities, and version changes. This guide follows the order of a typical workflow.
 If you are new to the command line, start with the [Bash command guide](COMMANDS.md), which explains paths, quoting,
@@ -12,6 +12,7 @@ line continuation, parallel execution, logs, and resume. The [quick start](QUICK
 | --- | --- |
 | Create an environment, install CESS, and check the interpreter | Section 2; see the [installation guide](INSTALL.md) for complete options |
 | Run a file, directory, parallel batch, or source-row subset | Section 6; see the [command guide](COMMANDS.md) for complete commands |
+| Inspect the instrument reference, LSF, and wavelength grid | Section 5 and the [instrument-model guide](INSTRUMENT_MODEL_251106917.md) |
 | Preview or resume a run | Section 7 |
 | Postprocess emission lines | Section 8 |
 | Read HDF5, plot spectra, and sample products | Sections 9–10 |
@@ -207,15 +208,19 @@ Key settings include:
 | `radi`, `expt`, `expnum` | Collecting-aperture radius in cm, exposure time per exposure in s, and number of exposures; radius is not diameter |
 | `arcsecperpix` | arcsec/pixel; must agree with the scale assumed by the morphology library |
 | `dc_value`, `read_noise` | Dark current in e-/s/pixel; single-pixel RMS read noise in e- per read |
-| `gu/gv/gi` wavelength fields | `start_wl/end_wl/min_wl/max_wl/dlambda` are in Angstrom; `init_idx/end_idx` are detection indices |
-| Background and template LSF | Defaults are a `fixed_template` background and `template_lsf.mode=unknown`; neither certifies a time-dependent sky or detailed LSF |
+| `gu/gv/gi` wavelength fields | Wavelengths and widths use Angstrom. In the new sampling mode, `min_wl/max_wl` define outer bin edges, not first/last centers |
+| `instrument_lsf` | Packaged `central_resolving_power` with `wavelength_law=constant_fwhm`; derives the Gaussian target from `*_central_wl / *_Res` |
+| `spectral_sampling` | Packaged `resolution_elements`, with `pixels_per_resolution_element=4.0`; read the actual output geometry |
+| `spectral_window` | Packaged `bandpass` derives analysis windows from actual wavelengths; `init_idx/end_idx` are derived caches in that mode |
+| Background and template LSF | `fixed_template` sky; adopted Gaussian R=300 input-template model with `template_lsf_broader_policy=preserve`, conditional on the library assumptions |
 | Throughput, background, GEMS, and profile libraries | Use the configured paths; photometric and zero-order resources are read according to products/switches |
 | `spectral_extraction` | Defaults to `legacy_full`; see Section 12 for advanced modes |
 
-The upstream Gaussian spectral FWHM is currently controlled by `*_dlambda`; the `*_Res` numbers do not enter that operator.
-Changing only `*_Res` therefore does not implement the intended resolution change.
-The templates' nominal R=300 declaration also does not determine their detailed LSF.
-Validation records effective values and provenance; it does not convert historical assumptions into instrument calibration.
+The packaged D5 configuration now uses central wavelengths and central R values from Table 1 of [arXiv:2511.06917v2](https://arxiv.org/html/2511.06917#S2). The target Gaussian FWHM is derived from these fields and extended as a constant width within each band. Its effective value is written to `*_dlambda`; editing only that derived cache does not change the reference model. The paper does not establish a constant R throughout each band or the full instrument LSF. The [instrument-model guide](INSTRUMENT_MODEL_251106917.md) describes the reference, sampling, and assumptions.
+
+The template setting `{"mode": "resolving_power", "value": 300.0}` is an adopted Gaussian approximation for the intended BayeSED library, not a measurement from the instrument paper. Above approximately 3522.65 Angstrom in GU, the template is already broader than the target. Default `template_lsf_broader_policy=preserve` retains that width and warns that the target was not attained. Choose `error` if such a mismatch must stop the run; it cannot be repaired by convolution. Other input libraries require their own `template_lsf` configuration.
+
+External configurations lacking the new instrument/sampling/window keys retain the earlier `fixed_fwhm` / `legacy` / `indices` contracts. In that instrument mode, `*_dlambda` remains the operative width and `*_Res` is descriptive. Validation records effective settings; it does not turn either convention into instrument calibration.
 
 Some values in the bundled default JSON are listed below for inspection. They are **current program settings**,
 not independently certified CSST specifications. An external configuration may use different values:
@@ -226,11 +231,16 @@ not independently certified CSST specifications. An external configuration may u
 | Spectroscopic `expt × expnum` | 150 s × 4 = 600 s |
 | `arcsecperpix` | 0.074 arcsec/pixel |
 | `dc_value` / `read_noise` | 0.02 e-/s/pixel / 5 e-/pixel/exposure RMS |
-| GU/GV/GI `*_dlambda` | 15 / 21 / 33 Angstrom; upstream Gaussian FWHM, not directly the final output pixel spacing |
+| GU/GV/GI outer wavelength limits | 2550–4100 / 4000–6400 / 6200–10000 Angstrom |
+| GU/GV/GI central wavelength / R | 3370 / 287; 5250 / 232; 8100 / 207, with wavelengths in Angstrom |
+| GU/GV/GI derived `*_dlambda` | 11.74216028 / 22.62931034 / 39.13043478 Angstrom; target pre-pixel Gaussian FWHM |
+| GU/GV/GI spectral bins | 529 / 425 / 389; exact outer edges and midpoint centers |
+| GU/GV/GI actual bin widths | 2.93005671 / 5.64705882 / 9.76863753 Angstrom |
 | `background_scale` | 1.0, multiplying the fixed background template |
 
 Seven-band photometry and the true zero-order integrals use their own `photometry_exposures` and `zero_order_exposures`.
 Do not interpret every product as a 600 s measurement.
+Throughput, sky, GEMS, and morphology-library files retain their contents; the paper's R80 is not substituted for a PSF FWHM. The new grid also changes the wavelength spans of pixel-based line windows and wavelength-error offsets. Retained analysis settings do not imply retained widths in Angstrom or an independently calibrated detection threshold.
 
 ## 6. Modes, switches, and batch runs
 
@@ -351,7 +361,8 @@ On a 32 GB machine, do not set workers from CPU count alone when large files wil
 If even one task does not fit, reduce the chunk size or use a host with sufficient memory.
 A 1000-row input with chunk size 100 produces 10 tasks; an unchunked file remains one task and uses one computational process even with 8 requested workers.
 
-**Running on Gravity.** Request CPU and memory on one host through PBS first, then set CESS's worker count.
+**Running on Gravity.** For many independent catalogues, use the [Torque job arrays](../scripts/gravity/ARRAY.md): one one-CPU job per input, separate MzLS/DECaLS memory requests, and an independent manifest per file. That guide covers preparation, full-file pilots, and submission.
+For a custom single-node batch, `cess.pbs` remains available. Request CPU and memory on one host through PBS first, then set CESS's worker count.
 These are separate steps. Assuming 8 CPUs have been allocated and memory is sufficient, set:
 
 ```bash
@@ -368,20 +379,20 @@ Requesting 8 cores but retaining `CESS_WORKERS=1` still launches one computation
 Setting `CESS_CPUS=8` without requesting 8 CPUs does not allocate them.
 With a thread request of 1, 8 busy workers usually represent about 8 concurrent computations, with extra parent/helper overhead.
 
-The supplied `cess.pbs` deliberately has no preset CPU, memory, or queue request.
-If Gravity uses PBS Pro/OpenPBS syntax, a single-host 8-CPU request has this form:
+The basic `cess.pbs` has no preset resource request.
+Gravity's [official job guide](https://jupyter.gravity.sjtu.edu.cn/doc/#/Basic/Job) uses Torque. A single-host 8-CPU request has this form:
 
 ```text
-#PBS -l select=1:ncpus=8:mem=<requested_memory>
+#PBS -q normal
+#PBS -l nodes=1:ppn=8
+#PBS -l mem=<requested_memory>
 #PBS -l walltime=12:00:00
 ```
 
 Replace `<requested_memory>` with an actual, permitted request based on workload estimates.
 The 12-hour walltime is a syntax example, not a completion guarantee.
-For Torque syntax the CPU portion usually uses `nodes=1:ppn=8`; do not combine both forms.
-Choose according to the actual Gravity configuration. The
-[official PBS Pro user guide](https://help.altair.com/2024.1.0/PBS%20Professional/PBSUserGuide2024.1.pdf)
-documents that syntax; the site's queue, units, and allocation rules remain authoritative.
+Do not substitute PBS Pro/OpenPBS `select=...` syntax. Current limits remain subject to
+`qstat -q`, `qstat -f -Q`, and the account's actual permissions.
 
 The scripts accept one HDF5 or an input directory and fix the per-worker numeric-library thread request at 1.
 Optionally set `CESS_MEMORY_BUDGET_GIB` to pass a conservative planning budget to the CLI; see the
@@ -391,6 +402,8 @@ Workers are not automatically spread across multiple requested nodes. Request on
 jobs with distinct outputs and manifests.
 
 ## 7. Dry-run and strict resume
+
+Scientific revision D5 changes the LSF/grid configuration. Preserve earlier products and choose new output/manifest paths for a D5 calculation. Do not use `--resume` to continue an older scientific revision; Gravity campaigns need a newly prepared run directory as well. An unchanged random seed does not make changed physical settings reproduce the previous spectra.
 
 The three preview forms have different filesystem behavior:
 a new `--dry-run` without a manifest only prints a plan;
@@ -552,10 +565,10 @@ Follow the [1D science-model description](SCIENCE_MODELS.md), [MGE model guide](
 Example spatial-pixel counts, kernel radii, and `pre_psf` are assumptions to verify, not calibrated CSST values.
 Library scale, PSF declaration, and runtime config must agree; legacy pickle bundles and positive libraries are not interchangeable.
 
-The Gravity tools are described in [scripts/gravity/README.md](../scripts/gravity/README.md), using `preflight.sh` and `cess.pbs`.
-They require absolute paths, version identity, bounded workers/threads, separate logs, and explicit resume.
-New-run preflight omits the manifest to avoid creating a checkpoint. PBS flavor, queue, and CPU/memory syntax must be confirmed on the actual server,
-and the user submits `qsub`. Local toy-payload verification does not establish server environment, resource, or full-catalogue acceptance.
+For catalogue production, use the [Gravity array guide](../scripts/gravity/ARRAY.md); custom single-node batches can use `preflight.sh` and `cess.pbs` as described in the [Gravity overview](../scripts/gravity/README.md).
+Both require absolute paths, version identity, bounded workers/threads, separate logs, and strict resume.
+New-run preflight omits the manifest to avoid creating a checkpoint. Current queue and account limits must be checked on Gravity before the user submits `qsub`.
+Prepare a fresh campaign for D5 rather than changing an earlier run's frozen config. Local payload checks do not establish server resource or full-catalogue acceptance.
 
 Source and documentation use the [MIT license](../LICENSE). Bundled resources and provenance are described in the
 [resource notice](../RESOURCE_NOTICE.md) and [resource inventory](RESOURCE_MANIFEST.json).

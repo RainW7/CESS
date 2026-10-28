@@ -26,6 +26,7 @@ include examples/README.md examples/README_zh-CN.md examples/make_toy_input.py
 include cess_h5_viewer.py
 include scripts/gravity/README.md scripts/gravity/README_zh-CN.md
 include scripts/gravity/preflight.sh scripts/gravity/cess.pbs
+include scripts/gravity/catalogue_array.py scripts/gravity/ARRAY.md scripts/gravity/ARRAY_zh-CN.md
 include docs/QUICKSTART.md docs/QUICKSTART_zh-CN.md
 include docs/USER_GUIDE.md docs/USER_GUIDE_zh-CN.md
 include docs/INSTALL.md docs/INSTALL_zh-CN.md
@@ -33,6 +34,7 @@ include docs/OUTPUT_LAYOUT.md docs/OUTPUT_LAYOUT_zh-CN.md
 include docs/VIEWER.md docs/VIEWER_zh-CN.md
 include docs/COMMANDS.md docs/COMMANDS_zh-CN.md
 include docs/SCIENCE_MODELS.md docs/SCIENCE_MODELS_zh-CN.md
+include docs/INSTRUMENT_MODEL_251106917.md docs/INSTRUMENT_MODEL_251106917_zh-CN.md
 include docs/MGE_MODELS.md docs/MGE_MODELS_zh-CN.md docs/MGE_BUNDLE_FORMAT.md
 include docs/RELEASE_NOTES_v0.9.0.md docs/RELEASE_NOTES_v0.9.0_zh-CN.md
 include docs/RESOURCE_MANIFEST.json

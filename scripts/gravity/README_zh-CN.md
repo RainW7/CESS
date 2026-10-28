@@ -1,7 +1,32 @@
 # Gravity / PBS 使用说明
 
 [English](README.md) | [简体中文](README_zh-CN.md)
-这些脚本用于在PBS计算节点运行CESS。预检要求 `0.9.0 / 20261024-D4`；请在Linux的Python3.12环境部署相同源码版本，提交作业前先运行预检。
+
+处理数千个独立星表时，推荐使用[整文件作业数组方案](ARRAY_zh-CN.md)：按 MzLS/DECaLS 分别申请内存，每文件独立输出、日志和恢复清单。下面的 `cess.pbs` 则适用于用户自行配置的单节点小批次。
+
+这些脚本用于在PBS计算节点运行CESS。预检要求 `0.9.0 / 20261027-D5`；请在Linux的Python3.12环境部署相同源码版本，提交作业前先运行预检。
+
+## 部署 D5 源码包
+
+将 D5 的 `cess-0.9.0.tar.gz` 和对应的 `SHA256SUMS` 上传到服务器的独立部署目录。版本号仍为 0.9.0，升级时请核对科学 revision，不能仅凭文件名区分 D4 和 D5。以下命令从存放安装包的目录执行：
+
+```bash
+sha256sum --check --ignore-missing SHA256SUMS
+tar -xzf cess-0.9.0.tar.gz
+cd cess-0.9.0
+conda create -n cess python=3.12 pip -y  # 仅首次创建环境时执行
+conda activate cess
+python -m pip install .
+python -c 'from cess.contracts import REPAIR_REVISION; print(REPAIR_REVISION)'
+```
+
+最后一条应显示 `20261027-D5`。已安装 CESS 的环境应将安装命令改为 `python -m pip install --force-reinstall --no-deps .`，前提是现有依赖满足要求；随后运行 `python -m pip check`。在运行中的作业结束前，不要替换其源码或环境。Mac 的 Conda 环境不能直接复制到 Linux。
+
+`cess-gravity-D5-20261028.tar.gz` 是同一份源码的 Gravity 便携包，解压目录为 `CESS-v0.9.0-D5`；也可进入该目录执行上述安装命令。它包含完整资源、示例、说明和作业脚本，无须另找旧版形态库或 throughput 文件。
+
+D5 使用更新的三波段范围、中央分辨率和输出采样，见[仪器模型说明](../../docs/INSTRUMENT_MODEL_251106917_zh-CN.md)。默认 BayeSED 模板采用 Gaussian R=300，GU 红端的过宽模板按 `preserve` 保留并提示局限。旧 D4 清单不能用于 D5 续跑；请按[作业数组指南](ARRAY_zh-CN.md)重新 `prepare` 新目录，再做每类一个完整文件的试跑。D5 内部的意外中断仍可按原清单续跑。
+
+## 单节点预检与小批次
 
 `preflight.sh` 只读检查 Python 3.12、导入源码位置、版本/revision、配置及资源文件是否可读，再调用实际 CLI dry-run；不检验仪器科学模型，也不证明所有输入行均有效。`cess.pbs` 才执行模拟，首次运行创建新 manifest，失败保留日志及续跑清单，直接返回失败状态。输出已有产品时 CLI 拒绝覆盖。
 
@@ -15,7 +40,7 @@ export CESS_CONFIG=/path/to/config/emulator_parameters.json
 export CESS_INPUT=/path/to/data/catalogue_001.hdf5
 export CESS_OUTPUT=/path/to/results/run001/catalogue_001
 export CESS_MANIFEST=/path/to/manifests/run001/catalogue_001.json
-export CESS_EXPECTED_VERSION=0.9.0 CESS_EXPECTED_REVISION=20261024-D4
+export CESS_EXPECTED_VERSION=0.9.0 CESS_EXPECTED_REVISION=20261027-D5
 export CESS_CPUS=1 CESS_WORKERS=1 CESS_SEED=1214
 unset CESS_CHUNK_SIZE CESS_MEMORY_BUDGET_GIB
 export CESS_MODE=standard CESS_OUTPUT_LAYOUT=structured CESS_RESUME=0
@@ -56,21 +81,16 @@ worker数量最终受任务数和可选内存预算限制：目录有2个文件�
 
 新任务 dry-run 故意不传 `--manifest`：当前 CLI 的新任务 `--dry-run --manifest` 会创建清单。此处预览不创建目录、manifest或科学产品，但不等价于正式执行前的全部输出冲突/输入哈希核验；正式 CLI 仍检查并拒绝覆盖。预览会读取星表元数据及资源可读性，未实际加载全部科学输入/资源。
 
-确认服务器 PBS flavour、可用队列、内存与 walltime 语法后，**只选一种**资源写法添加到 `cess.pbs` 的指令头，替换尖括号占位；不要把下面两组同时使用，也不要原样提交：
+Gravity 的[官方作业说明](https://jupyter.gravity.sjtu.edu.cn/doc/#/Basic/Job)使用 PBS/Torque。小批次可按实际资源需要，将以下指令补入 `cess.pbs` 的头部；替换尖括号占位，并通过 `qstat -q`、`qstat -f -Q` 核对当前队列限制：
 
 ```text
-# Torque 风格示意，须本站确认：
-#PBS -q <queue>
+# Torque；示例未填写实际 CPU、内存和时限，不可原样提交。
+#PBS -q normal
 #PBS -l nodes=1:ppn=<allocated_cpus>
 #PBS -l mem=<memory>,walltime=<HH:MM:SS>
-
-# PBS Pro/OpenPBS 风格示意，须本站确认：
-#PBS -q <queue>
-#PBS -l select=1:ncpus=<allocated_cpus>:mem=<memory>
-#PBS -l walltime=<HH:MM:SS>
 ```
 
-本站语法确认后，由用户执行 `qsub`，例如本站支持导出提交环境时：
+填好资源头并完成预检后，由用户执行 `qsub`。此小批次模板需要传入上述环境变量，例如：
 
 ```bash
 qsub -V "$CESS_REPO/scripts/gravity/cess.pbs"
