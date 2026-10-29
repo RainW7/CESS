@@ -221,6 +221,8 @@ cess --help
 已有可用环境无需重建；也可以选择 venv，详见[安装指南](docs/INSTALL_zh-CN.md)。
 这里安装的是已经下载或解压的源码，不要求同名软件已经上传到 PyPI。
 仅需核心模拟时安装 `.`；从 wheel/sdist 安装、可选依赖和版本升级见安装指南。
+
+Gravity 等旧版 Linux 请使用[glibc 2.17 核心安装步骤](docs/INSTALL_zh-CN.md#gravity--glibc-217-的-linux-安装)，绘图和 GUI 等可选依赖需另行验证平台兼容性。
 核心依赖为 NumPy、SciPy、Astropy、h5py、Specutils 和 tqdm；精确版本见
 [Python3.12 核心依赖](requirements/core-py312.txt)。pandas 用于抽样工具，Matplotlib 用于展示，
 GalSim 用于部分旧形态渲染/建库工具；常规预存库一维模拟不要求加载 GalSim。

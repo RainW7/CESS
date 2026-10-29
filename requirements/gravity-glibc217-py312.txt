@@ -1,0 +1,9 @@
+# Direct Linux core pins; Python 3.12, x86_64, glibc >=2.17.
+# Matches setup.cfg after evaluating its Linux markers. No optional GUI/render extras.
+# Install with --only-binary=:all: to fail rather than compile unsupported dependencies.
+astropy==8.0.2
+h5py==3.14.0
+numpy==2.2.6
+scipy==1.15.3
+specutils==2.4.0
+tqdm==4.70.1

@@ -8,6 +8,12 @@
 
 ## 部署 D5 源码包
 
+Gravity 登录节点已确认使用 glibc 2.17。请先按[Linux 安装步骤](../../docs/INSTALL_zh-CN.md#gravity--glibc-217-的-linux-安装)使用兼容依赖修订包，避免旧包强制安装需较新 glibc 的 NumPy/SciPy/h5py。当前修订通过 Linux platform markers 自动选择兼容核心版本；不是修改 D5 物理参数。
+
+`prepare` 会原子写入运行目录中的 `catalogue_array.py`，回读核对源码并执行 `--help`，成功后才生成计划和 PBS 脚本。PBS 在执行前还会独立检查冻结脚本非空且 SHA256 匹配。空 Python 文件本身会以状态 0 退出，因此仅看调度器退出码不足以判断 CESS 成功；还应检查对应 `status/<类别>/<编号>.json`、日志及完整产品。若发现冻结脚本为空或损坏，保留日志，停止旧作业后用新运行目录重新准备，不要手工修改计划哈希。
+
+已提交的作业使用准备时冻结的代码和依赖身份。更新仓库不会自动更新已有运行目录；正在运行的批次应继续保持原源码和环境，完成后再部署新版本。
+
 将 D5 的 `cess-0.9.0.tar.gz` 和对应的 `SHA256SUMS` 上传到服务器的独立部署目录。版本号仍为 0.9.0，升级时请核对科学 revision，不能仅凭文件名区分 D4 和 D5。以下命令从存放安装包的目录执行：
 
 ```bash
@@ -22,7 +28,7 @@ python -c 'from cess.contracts import REPAIR_REVISION; print(REPAIR_REVISION)'
 
 最后一条应显示 `20261027-D5`。已安装 CESS 的环境应将安装命令改为 `python -m pip install --force-reinstall --no-deps .`，前提是现有依赖满足要求；随后运行 `python -m pip check`。在运行中的作业结束前，不要替换其源码或环境。Mac 的 Conda 环境不能直接复制到 Linux。
 
-`cess-gravity-D5-20261028.tar.gz` 是同一份源码的 Gravity 便携包，解压目录为 `CESS-v0.9.0-D5`；也可进入该目录执行上述安装命令。它包含完整资源、示例、说明和作业脚本，无须另找旧版形态库或 throughput 文件。
+`cess-gravity-D5-20261029.tar.gz` 是包含 Linux 依赖兼容和冻结脚本保护修订的 Gravity 便携包，解压目录为 `CESS-v0.9.0-D5`；也可进入该目录执行上述安装命令。它包含完整资源、示例、说明和作业脚本，无须另找旧版形态库或 throughput 文件。
 
 D5 使用更新的三波段范围、中央分辨率和输出采样，见[仪器模型说明](../../docs/INSTRUMENT_MODEL_251106917_zh-CN.md)。默认 BayeSED 模板采用 Gaussian R=300，GU 红端的过宽模板按 `preserve` 保留并提示局限。旧 D4 清单不能用于 D5 续跑；请按[作业数组指南](ARRAY_zh-CN.md)重新 `prepare` 新目录，再做每类一个完整文件的试跑。D5 内部的意外中断仍可按原清单续跑。
 

@@ -1,8 +1,12 @@
 # Python 3.12 direct runtime pins, matching setup.cfg.
-# Platform-neutral input constraints; transitive dependencies are not locked.
+# Linux uses wheels compatible with glibc 2.17; other platforms retain the original pins.
+# Transitive dependencies are not locked.
 astropy==8.0.2
-h5py==3.16.0
-numpy==2.5.4
-scipy==1.18.1
+h5py==3.14.0; sys_platform == "linux"
+numpy==2.2.6; sys_platform == "linux"
+scipy==1.15.3; sys_platform == "linux"
+h5py==3.16.0; sys_platform != "linux"
+numpy==2.5.4; sys_platform != "linux"
+scipy==1.18.1; sys_platform != "linux"
 specutils==2.4.0
 tqdm==4.70.1

@@ -19,7 +19,6 @@ import platform
 import re
 import resource
 import shlex
-import shutil
 import signal
 import socket
 import subprocess
@@ -49,6 +48,42 @@ def sha256(path):
 
 def utc_now():
     return dt.datetime.now(dt.timezone.utc).isoformat()
+
+
+def read_runner_source(path):
+    """Snapshot executable source before inventory; reject empty/truncated input."""
+    payload = path.read_bytes()
+    require(bool(payload.strip()), "Submission helper source is empty: " + str(path))
+    try:
+        compile(payload, str(path), "exec")
+    except (SyntaxError, ValueError) as error:
+        raise ValueError("Invalid submission helper source: " + str(path)) from error
+    return payload
+
+
+def freeze_runner(payload, destination):
+    """Write a verified snapshot without filesystem fast-copy optimizations."""
+    require(bool(payload.strip()), "Refusing to freeze an empty submission helper")
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="wb", dir=destination.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, destination)
+        require(destination.read_bytes() == payload,
+                "Frozen submission helper failed read-back verification: " + str(destination))
+        result = subprocess.run([sys.executable, "-s", "-B", str(destination), "--help"],
+                                capture_output=True, text=True, timeout=60)
+        require(result.returncode == 0 and "usage:" in result.stdout and
+                all(action in result.stdout for action in ("prepare", "run", "status")),
+                "Frozen submission helper did not execute its CLI; no plan was published: " +
+                str(destination) + "\n" + result.stderr)
+        return hashlib.sha256(payload).hexdigest()
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def write_json(path, value):
@@ -124,6 +159,13 @@ def pbs_script(plan, group, plan_digest):
     run_dir = Path(plan["run_dir"])
     command = [plan["python"], "-s", "-B", plan["runner"], "run", "--plan",
                str(run_dir / "plan.json"), "--plan-sha256", plan_digest, "--group", group]
+    # An empty Python file exits zero without reaching its own identity checks.
+    # Verify it from outside that file before allowing any payload execution.
+    guard = [plan["python"], "-s", "-B", "-c",
+             "import hashlib,pathlib,sys; data=pathlib.Path(sys.argv[1]).read_bytes(); "
+             "ok=bool(data.strip()) and hashlib.sha256(data).hexdigest()==sys.argv[2]; "
+             "sys.exit(0 if ok else 'CESS frozen runner is empty or changed; refusing to run')",
+             plan["runner"], plan["runner_sha256"]]
     return "\n".join([
         "#!/bin/bash", "#PBS -N cess_" + group.lower(), "#PBS -S /bin/bash", "#PBS -q normal",
         "#PBS -l nodes=1:ppn=1", "#PBS -l mem={}gb".format(settings["memory_gb"]),
@@ -135,10 +177,12 @@ def pbs_script(plan, group, plan_digest):
         "export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONUNBUFFERED=1",
         "export PYTHONPATH=" + shlex.quote(str(Path(plan["repo"]) / "src")),
         "cd -- " + shlex.quote(plan["repo"]),
+        shlex.join(guard),
         "exec " + shlex.join(command), ""])
 
 
 def prepare(args):
+    runner_source = read_runner_source(Path(__file__).resolve())
     repo = args.repo.expanduser().resolve()
     run_dir = args.run_dir.expanduser().resolve()
     output = args.output.expanduser().resolve() if args.output else run_dir / "products"
@@ -202,9 +246,9 @@ def prepare(args):
         (run_dir / directory).mkdir()
     write_json(run_dir / "config.json", config)
     runner = run_dir / "catalogue_array.py"
-    shutil.copyfile(Path(__file__).resolve(), runner)
+    runner_digest = freeze_runner(runner_source, runner)
     plan = dict(format_version=1, created_at=utc_now(), repo=str(repo), run_dir=str(run_dir),
-        output=str(output), python=sys.executable, runner=str(runner), runner_sha256=sha256(runner),
+        output=str(output), python=sys.executable, runner=str(runner), runner_sha256=runner_digest,
         config=str(run_dir / "config.json"), config_sha256=sha256(run_dir / "config.json"),
         source_hashes=source_hashes(repo), resource_hashes=resources, runtime=runtime_identity(),
         version="0.9.0", revision="20261027-D5", seed=args.seed, groups=groups,

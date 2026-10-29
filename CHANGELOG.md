@@ -17,6 +17,14 @@
 
 ### Installation and operation
 
+- Verify the frozen Gravity runner by read-back and a CLI check during preparation,
+  and independently check its SHA256 before PBS execution so an empty script cannot
+  be mistaken for a successful simulation.
+
+- Select NumPy 2.2.6, SciPy 1.15.3, and h5py 3.14.0 on Linux to support
+  Python 3.12 / glibc 2.17 wheels; retain the original pins on other platforms.
+  Add a headless Gravity dependency profile and binary-only installation guidance.
+
 - Package the one-dimensional simulator as `src/cess` for Python 3.12.
 - Provide `cess simulate`, `cess el-detect`, and `cess merge`, with file, directory,
   glob, source-range and chunk inputs.

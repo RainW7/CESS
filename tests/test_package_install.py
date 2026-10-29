@@ -97,18 +97,35 @@ def test_direct_requirement_profiles_match_package_metadata():
     config.read(ROOT / 'setup.cfg')
     assert config['options']['python_requires'] == '>=3.12,<3.13'
     def requirements(lines):
-        return {item.name.lower(): str(item.specifier) for item in
+        return {(item.name.lower(), str(item.marker) if item.marker else ''): str(item.specifier) for item in
                 (Requirement(line.strip()) for line in lines if line.strip()
                  and not line.lstrip().startswith(('#', '-r ')))}
     expected = requirements(config['options']['install_requires'].splitlines())
     assert requirements((ROOT / 'requirements/core-py312.txt').read_text().splitlines()) == expected
-    assert 'photutils' not in expected and 'matplotlib' not in expected and 'tqdm' in expected
+    names = {name for name, marker in expected}
+    assert 'photutils' not in names and 'matplotlib' not in names and 'tqdm' in names
     for extra in ('tools', 'plot', 'viewer', 'render'):
         assert requirements((ROOT / ('requirements/' + extra + '-py312.txt')).read_text().splitlines()) == \
                requirements(config['options.extras_require'][extra].splitlines())
-    assert requirements((ROOT / 'requirements/test-py312.txt').read_text().splitlines()) == {'pytest': '==9.1.1'}
+    assert requirements((ROOT / 'requirements/test-py312.txt').read_text().splitlines()) == {('pytest', ''): '==9.1.1'}
     assert set(config['options.entry_points']['console_scripts'].strip().splitlines()) == {
         name + ' = ' + value for name, value in ENTRYPOINTS.items()}
+
+
+def test_gravity_profile_matches_linux_package_requirements():
+    from packaging.requirements import Requirement
+    config = configparser.ConfigParser()
+    config.read(ROOT / 'setup.cfg')
+    declared = [Requirement(line.strip()) for line in
+                config['options']['install_requires'].splitlines() if line.strip()]
+    selected = [item for item in declared if item.marker is None or
+                item.marker.evaluate({'sys_platform': 'linux', 'extra': ''})]
+    profile = [Requirement(line.strip()) for line in
+               (ROOT / 'requirements/gravity-glibc217-py312.txt').read_text().splitlines()
+               if line.strip() and not line.lstrip().startswith('#')]
+    assert len(selected) == len({item.name for item in selected}) == 6
+    assert {(item.name, str(item.specifier)) for item in selected} == {
+        (item.name, str(item.specifier)) for item in profile}
 
 
 @pytest.mark.parametrize('name', ['', '.', '../private.fits', '/tmp/private.fits', 'a/../../private', 'a\\b'])
@@ -277,9 +294,15 @@ def test_wheel_contains_all_default_resources_and_entrypoints(built_wheel):
             member, = [name for name in entries if name.endswith('.dist-info/licenses/' + filename)]
             assert archive.read(member) == (ROOT / filename).read_bytes()
         requirements = [Requirement(value) for value in metadata.get_all('Requires-Dist')]
-        assert {item.name.lower(): str(item.specifier) for item in requirements if item.marker is None} == {
-            'astropy': '==8.0.2', 'h5py': '==3.16.0', 'numpy': '==2.5.4',
-            'scipy': '==1.18.1', 'specutils': '==2.4.0', 'tqdm': '==4.70.1'}
+        for platform in ('linux', 'darwin', 'win32'):
+            selected = [item for item in requirements if item.marker is None or
+                        item.marker.evaluate({'sys_platform': platform, 'extra': ''})]
+            expected = {'astropy': '==8.0.2', 'specutils': '==2.4.0', 'tqdm': '==4.70.1'}
+            expected.update(dict(zip(('h5py', 'numpy', 'scipy'),
+                ('==3.14.0', '==2.2.6', '==1.15.3') if platform == 'linux' else
+                ('==3.16.0', '==2.5.4', '==1.18.1'))))
+            assert len(selected) == len(expected)  # exactly one pin per core package
+            assert {item.name.lower(): str(item.specifier) for item in selected} == expected
         for extra, package, constraint in [('render', 'galsim', '==2.8.5'),
                 ('tools', 'pandas', '==3.1.0'), ('plot', 'matplotlib', '==3.11.2'),
                 ('viewer', 'matplotlib', '==3.11.2'),

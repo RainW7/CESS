@@ -6,6 +6,7 @@ the memory/runtime requirements of a production catalogue.
 """
 import hashlib
 import fcntl
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -81,11 +82,64 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def load_driver():
+    spec = importlib.util.spec_from_file_location("gravity_array_test_driver", DRIVER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.mark.parametrize("payload", [b"", b"  \n\t"])
+def test_freeze_rejects_empty_source_before_writing(tmp_path, payload):
+    driver = load_driver()
+    source = tmp_path / "source.py"
+    source.write_bytes(payload)
+    with pytest.raises(ValueError, match="source is empty"):
+        driver.read_runner_source(source)
+    destination = tmp_path / "runner.py"
+    with pytest.raises(ValueError, match="empty submission helper"):
+        driver.freeze_runner(payload, destination)
+    assert not destination.exists()
+
+
+def test_freeze_rejects_silent_zero_exit_without_cli(tmp_path):
+    driver = load_driver()
+    with pytest.raises(ValueError, match="did not execute its CLI"):
+        driver.freeze_runner(b"VALUE = 1\n", tmp_path / "runner.py")
+
+
+def test_freeze_detects_truncation_during_publication(tmp_path, monkeypatch):
+    driver = load_driver()
+    replace = driver.os.replace
+    def truncate_after_replace(source, destination):
+        replace(source, destination)
+        Path(destination).write_bytes(b"")
+    monkeypatch.setattr(driver.os, "replace", truncate_after_replace)
+    with pytest.raises(ValueError, match="read-back verification"):
+        driver.freeze_runner(DRIVER.read_bytes(), tmp_path / "runner.py")
+
+
+@pytest.mark.parametrize("payload", [b"", b"# entry point removed\n"])
+def test_pbs_rejects_empty_or_changed_runner_before_payload(tmp_path, payload):
+    run, _ = prepare(tmp_path, catalogue_pair(tmp_path))
+    (run / "catalogue_array.py").write_bytes(payload)
+    result = subprocess.run(["/bin/bash", str(run / "DECaLS.pbs")],
+                            cwd=tmp_path, env=environment(tmp_path),
+                            text=True, capture_output=True, timeout=30)
+    assert result.returncode != 0
+    assert "frozen runner is empty or changed" in result.stderr
+    assert not list((run / "status").rglob("*.json"))
+    assert not list((run / "logs").rglob("*.log"))
+
+
 def test_prepare_freezes_complete_whole_file_plan_without_running(tmp_path):
     inputs = catalogue_pair(tmp_path)
     before = {path.name: (digest(path), path.stat().st_mtime_ns)
               for path in inputs.iterdir()}
     run, plan = prepare(tmp_path, inputs)
+    assert plan["runner_sha256"] == digest(DRIVER) == digest(run / "catalogue_array.py")
+    help_result = run_driver(tmp_path, "--help", driver=run / "catalogue_array.py")
+    assert help_result.returncode == 0 and "usage:" in help_result.stdout
     assert set(plan["groups"]) == {"MzLS", "DECaLS"}
     for group, rows in (("MzLS", 3), ("DECaLS", 2)):
         record = plan["groups"][group]

@@ -117,9 +117,30 @@ See the [HDF5 viewer guide](VIEWER.md).
 
 ## 2. Dependency groups
 
+### Gravity / Linux with glibc 2.17
+
+Linux core dependencies use NumPy 2.2.6, SciPy 1.15.3, and h5py 3.14.0; Astropy 8.0.2, specutils 2.4.0, and tqdm 4.70.1 remain unchanged. These versions provide prebuilt packages for Python 3.12, x86_64, and glibc 2.17. macOS retains the original profile. Use source or a wheel containing this installation revision; older artifacts retain their original requirements.
+
+From the updated source root, with the `cess` environment active:
+
+```bash
+python -m pip install --only-binary=:all: 'setuptools>=84.2.1,<85' 'wheel>=0.48,<0.49'
+python -m pip install --only-binary=:all: -r requirements/gravity-glibc217-py312.txt
+python -m pip install --only-binary=:all: .
+python -m pip check
+cess --help
+```
+
+`--only-binary=:all:` requires prebuilt dependencies; the explicitly supplied local CESS source can still be built as a pure-Python package. If an index lacks a compatible wheel, installation fails rather than compiling NumPy/HDF5 on the login node. Do not bypass requirement conflicts with `--no-deps` or put runtime dependencies in `pyproject.toml`'s `build-system.requires`. `>=3.14.0` is a lower bound; an exact pin uses `==3.14.0`.
+
+This core profile targets headless batch simulation. Do not add `tools/plot/viewer/render` extras on old Linux without separately validating their optional dependencies. After changing dependencies, use a fresh run directory and record `python -m pip freeze`. Complete-file pilots must still run on the server's compute nodes.
+
+### Dependency list
+
 | Group | Declared dependencies |
 | --- | --- |
-| Core | astropy 8.0.2, h5py 3.16.0, numpy 2.5.4, scipy 1.18.1, specutils 2.4.0, tqdm 4.70.1 |
+| Core (non-Linux) | astropy 8.0.2, h5py 3.16.0, numpy 2.5.4, scipy 1.18.1, specutils 2.4.0, tqdm 4.70.1 |
+| Core (Linux) | astropy 8.0.2, h5py 3.14.0, numpy 2.2.6, scipy 1.15.3, specutils 2.4.0, tqdm 4.70.1 |
 | `tools` | pandas 3.1.0 for stratified sampling/export |
 | `plot` | matplotlib 3.11.2 for spectrum plots |
 | `viewer` | matplotlib 3.11.2 for the optional Tk viewer; Tcl/Tk is supplied by the Python environment |

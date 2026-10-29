@@ -114,9 +114,30 @@ Conda缺少Tk时可在激活环境运行 `conda install tk`，用 `python -m tki
 
 ## 2. 依赖分层
 
+### Gravity / glibc 2.17 的 Linux 安装
+
+Linux 核心依赖固定为 NumPy 2.2.6、SciPy 1.15.3、h5py 3.14.0；Astropy 8.0.2、specutils 2.4.0 和 tqdm 4.70.1 保持不变。这组版本提供 Python 3.12、x86_64、glibc 2.17 可用的预编译包。macOS 保留原依赖组合。须使用包含本修订的源码或 wheel；旧安装包的依赖声明不会自动变化。
+
+在已激活的 `cess` 环境、更新后的源码根目录执行：
+
+```bash
+python -m pip install --only-binary=:all: 'setuptools>=84.2.1,<85' 'wheel>=0.48,<0.49'
+python -m pip install --only-binary=:all: -r requirements/gravity-glibc217-py312.txt
+python -m pip install --only-binary=:all: .
+python -m pip check
+cess --help
+```
+
+`--only-binary=:all:` 要求依赖使用预编译包；显式指定的本地 CESS 源码仍可构建纯 Python 包。软件源若缺兼容 wheel，该命令直接报错，不在登录节点尝试编译 NumPy/HDF5。不要用 `--no-deps` 忽略冲突，也不要把运行依赖放入 `pyproject.toml` 的 `build-system.requires`；`>=3.14.0` 是下限，固定版本应写 `==3.14.0`。
+
+这套核心组合用于无界面的批量模拟；旧 Linux 不应直接加 `tools/plot/viewer/render` extras，其可选依赖尚未按 glibc 2.17 验收。依赖版本改变后使用全新任务目录，并记录 `python -m pip freeze`；服务器完整文件试跑仍需在计算节点执行。
+
+### 依赖清单
+
 | 用途 | 当前声明的依赖 |
 | --- | --- |
-| 核心 | astropy8.0.2、h5py3.16.0、numpy2.5.4、scipy1.18.1、specutils2.4.0、tqdm4.70.1 |
+| 核心（非 Linux） | astropy8.0.2、h5py3.16.0、numpy2.5.4、scipy1.18.1、specutils2.4.0、tqdm4.70.1 |
+| 核心（Linux） | astropy8.0.2、h5py3.14.0、numpy2.2.6、scipy1.15.3、specutils2.4.0、tqdm4.70.1 |
 | `tools` | pandas3.1.0，用于分层抽样/导出 |
 | `plot` | matplotlib3.11.2，用于光谱展示 |
 | `viewer` | matplotlib 3.11.2；可选Tk桌面浏览器，Tcl/Tk由Python环境提供 |

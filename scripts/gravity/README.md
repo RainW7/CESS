@@ -8,6 +8,12 @@ These scripts run CESS on a PBS compute node. Preflight expects `0.9.0 / 2026102
 
 ## Deploy the D5 source package
 
+The Gravity login node has been confirmed to use glibc 2.17. Follow the [Linux installation steps](../../docs/INSTALL.md#gravity--linux-with-glibc-217) using the compatibility revision, rather than an older artifact requiring newer NumPy/SciPy/h5py wheels. Linux platform markers select the compatible core versions automatically; D5 physical parameters are unchanged.
+
+`prepare` atomically writes the campaign's `catalogue_array.py`, verifies its bytes, and executes `--help` before publishing a plan and PBS scripts. PBS independently checks that the frozen helper is nonempty and matches its SHA256 before execution. Python exits with status 0 for an empty script, so scheduler exit status alone does not establish success: also check `status/<survey>/<index>.json`, logs, and the complete product. If the frozen helper is empty or damaged, retain the logs, stop old jobs, and prepare a fresh run directory; do not edit plan checksums manually.
+
+Jobs depend on the code and dependency identity captured during preparation. Updating the repository does not update existing campaigns. Keep the source and environment used by active jobs unchanged, and deploy updates after those jobs finish.
+
 Upload the D5 `cess-0.9.0.tar.gz` and its matching `SHA256SUMS` to a separate deployment directory on the server. The package version remains 0.9.0: check the scientific revision when upgrading, because the filename alone does not distinguish D4 from D5. Run these commands from the directory containing the archive:
 
 ```bash
@@ -22,7 +28,7 @@ python -c 'from cess.contracts import REPAIR_REVISION; print(REPAIR_REVISION)'
 
 The last command must print `20261027-D5`. In an environment with CESS already installed, replace the installation command with `python -m pip install --force-reinstall --no-deps .`, provided the existing dependencies meet the requirements; then run `python -m pip check`. Wait for running jobs to finish before replacing their source or environment. Do not copy a Mac Conda environment to Linux.
 
-`cess-gravity-D5-20261028.tar.gz` is a portable Gravity bundle of the same source, extracted into `CESS-v0.9.0-D5`; enter that directory to use the same installation commands. It includes the resources, examples, documentation, and job scripts, so no older morphology libraries or throughput files are needed.
+`cess-gravity-D5-20261029.tar.gz` is the portable Gravity bundle containing the Linux dependency compatibility and frozen-runner protection revisions, extracted into `CESS-v0.9.0-D5`; enter that directory to use the same installation commands. It includes the resources, examples, documentation, and job scripts, so no older morphology libraries or throughput files are needed.
 
 D5 updates the three band ranges, central resolving powers, and output sampling; see the [instrument model](../../docs/INSTRUMENT_MODEL_251106917.md). The default BayeSED template is treated as Gaussian R=300, retaining and warning about the broader template at the red end of GU under `preserve`. A D4 manifest cannot resume a D5 run: follow the [array guide](ARRAY.md) to `prepare` a fresh directory and pilot one complete file per survey. Interrupted D5 jobs can still resume using their original manifests.
 

@@ -212,6 +212,8 @@ environment. The [installation guide](docs/INSTALL.md) also covers venv, wheel/s
 installation and upgrades. This installs source you obtained and does not assume
 that CESS has been uploaded to PyPI.
 
+Gravity and other older Linux systems should use the [glibc 2.17 core installation instructions](docs/INSTALL.md#gravity--linux-with-glibc-217); optional plotting and GUI extras need separate platform validation.
+
 Core-only installation uses `python -m pip install .`. Core packages are NumPy,
 SciPy, Astropy, h5py, Specutils and tqdm; see [exact requirements](requirements/core-py312.txt).
 pandas supports sampling, Matplotlib supports plotting, and optional GalSim supports
